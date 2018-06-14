@@ -8,8 +8,7 @@
 #
 # Author  : Alexander Willner
 # License : Whatever. Use at your own risk.
-# Source  : https://gist.github.com/AlexanderWillner/e65cfa6c3c537edbd35a99aca2a0ae7a
-# Source (config.plist) : https://gist.github.com/AlexanderWillner/1066810002251d456f16def24cfbd85f
+# Source  : https://github.com/AlexanderWillner/runMacOSinVirtualBox
 ###############################################################################
 
 # Core parameters #############################################################
