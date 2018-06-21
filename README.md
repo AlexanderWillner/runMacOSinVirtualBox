@@ -21,6 +21,7 @@ Starting VM 'macOS-Mojave'...already running.
 ```
 
 Some help:
+
 ```
 $ make
 Some available commands:

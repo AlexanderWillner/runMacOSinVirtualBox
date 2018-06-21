@@ -19,7 +19,7 @@ readonly DST_DMG="$DST_DIR/macOS-Mojave.dmg"
 readonly DST_CLOVER="$DST_DIR/macOS-MojaveClover"
 readonly DST_VOL="/Volumes/macOS-Mojave"
 readonly DST_ISO="$DST_DIR/macOS-Mojave.iso.cdr"
-readonly FILE_EFI="/usr/standalone/i386/apfs.efi"
+readonly FILE_EFI="$DST_DIR/apfs.efi"
 readonly FILE_CFG="config.plist"
 readonly VM="macOS-Mojave"
 readonly VM_DIR="$HOME/VirtualBox VMs/$VM"
@@ -41,10 +41,6 @@ runChecks() {
     echo "ERROR: 'xz' not installed."
     exit 3
   fi
-  if [ ! -f "$FILE_EFI" ]; then
-    echo "ERROR: '$FILE_EFI' not found."
-    exit 4
-  fi
   if [ ! -f "$FILE_CFG" ]; then
     echo "ERROR: '$FILE_CFG' not found. Not checked out?"
     exit 5
@@ -58,8 +54,8 @@ createImage() {
     hdiutil detach "/Volumes/$INST_VER/" 2>/dev/null || true
     hdiutil create -o "$DST_DMG" -size 10g -layout SPUD -fs HFS+J &&
       hdiutil attach "$DST_DMG" -mountpoint "$DST_VOL" &&
-      sudo "$INST_BIN" --nointeraction --volume "$DST_VOL" &&
-      hdiutil detach "/Volumes/$INST_VER/"
+      sudo "$INST_BIN" --nointeraction --volume "$DST_VOL"
+    hdiutil detach "/Volumes/$INST_VER/" 2>/dev/null || true
   else
     echo "already exists."
   fi
@@ -72,10 +68,24 @@ createImage() {
   fi
 }
 
+extractAPFS() {
+  echo -n "Extracting APFS EFI driver..."
+  if [ ! -e "$FILE_EFI" ]; then
+    echo "."
+    hdiutil detach "/Volumes/OS\ X\ Base\ System/" 2>/dev/null || true
+    hdiutil attach "/Applications/$INST_VER.app/Contents/SharedSupport/BaseSystem.dmg" &&
+      cp /Volumes/OS\ X\ Base\ System/usr/standalone/i386/apfs.efi "$FILE_EFI"
+    hdiutil detach "/Volumes/OS\ X\ Base\ System/" 2>/dev/null || true
+  else
+    echo "already exists."
+  fi
+}
+
 createClover() {
   echo -n "Creating clover image '$DST_CLOVER.iso'..."
   if [ ! -e "$DST_CLOVER.iso" ]; then
     echo "."
+    extractAPFS
     curl -Lk https://sourceforge.net/projects/cloverefiboot/files/Bootable_ISO/CloverISO-4533.tar.lzma/download -o clover.tar.lzma
     xz -d clover.tar.lzma
     tar xf clover.tar
