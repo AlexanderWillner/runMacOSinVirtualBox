@@ -12,7 +12,7 @@
 ###############################################################################
 
 # Core parameters #############################################################
-readonly INST_VER="Install macOS 10.14 Beta"
+readonly INST_VER="Install macOS Mojave Beta"
 readonly INST_BIN="/Applications/$INST_VER.app/Contents/Resources/createinstallmedia"
 readonly DST_DIR="/tmp"
 readonly DST_DMG="$DST_DIR/macOS-Mojave.dmg"
@@ -164,7 +164,7 @@ cleanup() {
 main() {
   if [ "$1" = "clean" ]; then
     VBoxManage unregistervm --delete "$VM" || true
-    rm -f Clover-v2.4k-4533-X64.iso clover.tar "$DST_DIR/macOS-Mojave.dmg" "$DST_DIR/macOS-MojaveClover.iso" "$DST_DIR/macOS-MojaveClover.dmg" "$DST_DIR/macOS-Mojave.iso.cdr" || true
+    rm -f Clover-v2.4k-4533-X64.iso clover.tar "$DST_DIR/macOS-Mojave.dmg" "$DST_DIR/macOS-MojaveClover.iso" "$DST_DIR/macOS-MojaveClover.dmg" "$DST_DIR/macOS-Mojave.iso.cdr" "$FILE_EFI" || true
   else
     echo "Setup takes around 2 minutes..."
     runChecks
