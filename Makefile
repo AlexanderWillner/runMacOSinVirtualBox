@@ -5,11 +5,12 @@ all: help
 
 help:
 	@echo "Some available commands:"
-	@echo " * image    : create macOS installer, clover image and VM"
-	@echo " * clean    : delete generated images and VM"
-	@echo " * test     : run some tests"
-	@echo " * style    : style bash scripts"
-	@echo " * harden   : harden bash scripts"
+	@echo " * image    : create macOS installer image, clover boot image, VM and disk"
+	@echo " * clean    : delete generated images and downloaded files"
+	@echo " * stash    : delete generated VM and disk"
+	@echo " * test     : test shell scripts"
+	@echo " * style    : style shell scripts"
+	@echo " * harden   : harden shell scripts"
 	@echo " * feedback : create a GitHub issue"
 
 image:
@@ -17,6 +18,9 @@ image:
 
 clean:
 	@bash  $(SCRIPT) clean
+
+stash:
+	@bash  $(SCRIPT) stash
 
 feedback:
 	@open https://github.com/alexanderwillner/runMacOSinVirtualBox/issues

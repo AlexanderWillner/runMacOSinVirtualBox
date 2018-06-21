@@ -25,11 +25,12 @@ Execute ```make``` to get some help:
 ```
 $ make
 Some available commands:
- * image    : create macOS installer, clover image and VM
- * clean    : delete generated images and VM
- * test     : run some tests
- * style    : style bash scripts
- * harden   : harden bash scripts
+ * image    : create macOS installer image, clover boot image, VM and disk
+ * clean    : delete generated images and downloaded files
+ * stash    : delete generated VM and disk
+ * test     : test shell scripts
+ * style    : style shell scripts
+ * harden   : harden shell scripts
  * feedback : create a GitHub issue
 ```
  

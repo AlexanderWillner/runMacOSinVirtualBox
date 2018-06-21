@@ -72,10 +72,10 @@ extractAPFS() {
   echo -n "Extracting APFS EFI driver..."
   if [ ! -e "$FILE_EFI" ]; then
     echo "."
-    hdiutil detach "/Volumes/OS\ X\ Base\ System/" 2>/dev/null || true
+    hdiutil detach "/Volumes/OS X Base System/" 2>/dev/null || true
     hdiutil attach "/Applications/$INST_VER.app/Contents/SharedSupport/BaseSystem.dmg" &&
       cp /Volumes/OS\ X\ Base\ System/usr/standalone/i386/apfs.efi "$FILE_EFI"
-    hdiutil detach "/Volumes/OS\ X\ Base\ System/" 2>/dev/null || true
+    hdiutil detach "/Volumes/OS X Base System/" 2>/dev/null || true
   else
     echo "already exists."
   fi
@@ -163,9 +163,12 @@ cleanup() {
 
 main() {
   if [ "$1" = "clean" ]; then
+    rm -f Clover-v2.4k-4533-X64.iso clover.tar* "$DST_DIR/macOS-Mojave.dmg" "$DST_DIR/macOS-MojaveClover.iso" "$DST_DIR/macOS-MojaveClover.dmg" "$DST_DIR/macOS-Mojave.iso.cdr" "$FILE_EFI" || true
+  fi
+  if [ "$1" = "stash" ]; then
     VBoxManage unregistervm --delete "$VM" || true
-    rm -f Clover-v2.4k-4533-X64.iso clover.tar "$DST_DIR/macOS-Mojave.dmg" "$DST_DIR/macOS-MojaveClover.iso" "$DST_DIR/macOS-MojaveClover.dmg" "$DST_DIR/macOS-Mojave.iso.cdr" "$FILE_EFI" || true
-  else
+  fi
+  if [ "$1" = "" ]; then
     echo "Setup takes around 2 minutes..."
     runChecks
     createImage
