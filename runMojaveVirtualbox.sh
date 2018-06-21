@@ -21,7 +21,7 @@ readonly DST_VOL="/Volumes/macOS-Mojave"
 readonly DST_ISO="$DST_DIR/macOS-Mojave.iso.cdr"
 readonly FILE_EFI="$DST_DIR/apfs.efi"
 readonly FILE_CFG="config.plist"
-readonly VM="macOS-Mojave2"
+readonly VM="macOS-Mojave"
 readonly VM_DIR="$HOME/VirtualBox VMs/$VM"
 readonly VM_SIZE="32768"
 ###############################################################################
