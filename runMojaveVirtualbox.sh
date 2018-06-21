@@ -21,7 +21,7 @@ readonly DST_VOL="/Volumes/macOS-Mojave"
 readonly DST_ISO="$DST_DIR/macOS-Mojave.iso.cdr"
 readonly FILE_EFI="$DST_DIR/apfs.efi"
 readonly FILE_CFG="config.plist"
-readonly VM="macOS-Mojave"
+readonly VM="macOS-Mojave2"
 readonly VM_DIR="$HOME/VirtualBox VMs/$VM"
 readonly VM_SIZE="32768"
 ###############################################################################
@@ -120,8 +120,8 @@ setupVM() {
   if ! VBoxManage showvminfo "$VM" >/dev/null 2>&1; then
     echo "."
     VBoxManage createvm --register --name "$VM" --ostype MacOS1013_64
-    VBoxManage modifyvm "$VM" --usbxhci on --memory 4096 --vram 128 --firmware efi --chipset ich9 --mouse usbtablet --keyboard usb
-    VBoxManage setextradata "$VM" "CustomVideoMode1" "1920x1080x32"
+    VBoxManage modifyvm "$VM" --usbxhci on --memory 4096 --vram 128 --cpus 2 --firmware efi --chipset ich9 --mouse usbtablet --keyboard usb
+    VBoxManage setextradata "$VM" "CustomVideoMode1" "1680x1050x32"
     VBoxManage setextradata "$VM" VBoxInternal2/EfiGraphicsResolution 1680x1050
     VBoxManage storagectl "$VM" --name "SATA Controller" --add sata --controller IntelAHCI --hostiocache on
     VBoxManage storageattach "$VM" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$VM_DIR/$VM.vdi"
