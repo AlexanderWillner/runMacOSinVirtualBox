@@ -41,6 +41,10 @@ runChecks() {
     echo "ERROR: 'xz' not installed."
     exit 3
   fi
+  if [ "$(VBoxManage list extpacks|grep 'USB 3.0')" = "" ]; then
+    echo "ERROR: VirtualBox USB 3.0 Extension Pack not installed."
+    exit 4
+  fi
   if [ ! -f "$FILE_CFG" ]; then
     echo "ERROR: '$FILE_CFG' not found. Not checked out?"
     exit 5
