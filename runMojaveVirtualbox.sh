@@ -42,6 +42,11 @@ runChecks() {
     echo "ERROR: $INST_VERS macOS installers found. Don't know which one to select."
     exit 7
   fi
+  if [ ! -d "$INST_VER/Contents/SharedSupport/" ]; then
+    echo "ERROR: Seems you've downloaded the macOS Stub Installer. Please download the full installer (google the issue)."
+    echo "Suggestion: Follow Step 2 (Download the macOS Public Beta Access Utility) from https://beta.apple.com/sp/betaprogram/redemption#macos."
+    exit 8
+  fi
   if [ ! -x "$INST_BIN" ]; then
     echo "ERROR: '$INST_BIN' not found."
     exit 1
@@ -157,7 +162,7 @@ setupVM() {
     VBoxManage createvm --register --name "$VM" --ostype MacOS1013_64
     VBoxManage modifyvm "$VM" --usbxhci on --memory "$VM_RAM" --vram "$VM_VRAM" --cpus "$VM_CPU" --firmware efi --chipset ich9 --mouse usbtablet --keyboard usb
     VBoxManage setextradata "$VM" "CustomVideoMode1" "${VM_RES}x32"
-    VBoxManage setextradata "$VM" VBoxInternal2/EfiGraphicsResolution $VM_RES
+    VBoxManage setextradata "$VM" VBoxInternal2/EfiGraphicsResolution "$VM_RES"
     VBoxManage storagectl "$VM" --name "SATA Controller" --add sata --controller IntelAHCI --hostiocache on
     VBoxManage storageattach "$VM" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$VM_DIR/$VM.vdi"
     VBoxManage storageattach "$VM" --storagectl "SATA Controller" --port 1 --device 0 --type dvddrive --medium "$DST_CLOVER.iso"
@@ -198,7 +203,7 @@ cleanup() {
 
 main() {
   if [ "$1" = "clean" ]; then
-    rm -f Clover-v2.4k-4533-X64.iso clover.tar* "$DST_CLOVER.iso" "$DST_CLOVER.dmg" "$DST_ISO" "$FILE_EFI" || true
+    rm -f Clover-v2.4k-4533-X64.iso clover.tar* "$DST_CLOVER.iso" "$DST_CLOVER.dmg" "$DST_DMG" "$DST_ISO" "$FILE_EFI" || true
   fi
   if [ "$1" = "stash" ]; then
     VBoxManage unregistervm --delete "$VM" || true
