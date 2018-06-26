@@ -16,15 +16,19 @@ readonly INST_VERS="$(find /Applications -maxdepth 1 -type d -name 'Install macO
 readonly INST_VER="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' -print -quit)"
 readonly INST_BIN="$INST_VER/Contents/Resources/createinstallmedia"
 readonly DST_DIR="/tmp"
-readonly DST_DMG="$DST_DIR/macOS-Mojave.dmg"
-readonly DST_CLOVER="$DST_DIR/macOS-MojaveClover"
-readonly DST_VOL="/Volumes/macOS-Mojave"
-readonly DST_ISO="$DST_DIR/macOS-Mojave.iso.cdr"
-readonly FILE_EFI="$DST_DIR/apfs.efi"
-readonly FILE_CFG="config.plist"
 readonly VM="macOS-Mojave"
 readonly VM_DIR="$HOME/VirtualBox VMs/$VM"
 readonly VM_SIZE="32768"
+readonly VM_RES="1680x1050"
+readonly VM_RAM="4096"
+readonly VM_VRAM="128"
+readonly VM_CPU="2"
+readonly DST_DMG="$DST_DIR/$VM.dmg"
+readonly DST_CLOVER="$DST_DIR/{$VM}Clover"
+readonly DST_VOL="/Volumes/$VM"
+readonly DST_ISO="$DST_DIR/$VM.iso.cdr"
+readonly FILE_EFI="$DST_DIR/apfs.efi"
+readonly FILE_CFG="config.plist"
 ###############################################################################
 
 # Define methods ##############################################################
@@ -65,8 +69,12 @@ ejectAll() {
 	OIFS="$IFS"
 	IFS=$'\n'
     for i in $(hdiutil info|grep -i 'Install macOS'|awk '{print $1}'); do
-        hdiutil detach $i 2>/dev/null || true
+        hdiutil detach "$i" 2>/dev/null || true
     done
+    for i in $(hdiutil info|grep -i 'OS X Base System'|awk '{print $1}'); do
+        hdiutil detach "$i" 2>/dev/null || true
+    done
+    hdiutil detach "$DST_VOL" 2>/dev/null || true
 	IFS="$OIFS"
 }
 
@@ -109,8 +117,11 @@ createClover() {
   if [ ! -e "$DST_CLOVER.iso" ]; then
     echo "."
     extractAPFS
-    curl -Lk https://sourceforge.net/projects/cloverefiboot/files/Bootable_ISO/CloverISO-4533.tar.lzma/download -o clover.tar.lzma
-    if [ ! -f "clover.tar.lzma" ]; then echo "ERROR: Could not download clover."; exit 8; fi
+    while [ ! -f "clover.tar.lzma" ]; do
+      echo "Downloading Clover (needs Internet access)..."
+      curl -Lk https://sourceforge.net/projects/cloverefiboot/files/Bootable_ISO/CloverISO-4533.tar.lzma/download -o clover.tar.lzma
+      sleep 1
+    done
     xz -d clover.tar.lzma
     tar xf clover.tar
     hdiutil detach /Volumes/Clover-v2.4k-4533-X64/ 2>/dev/null || true
@@ -144,9 +155,9 @@ setupVM() {
   if ! VBoxManage showvminfo "$VM" >/dev/null 2>&1; then
     echo "."
     VBoxManage createvm --register --name "$VM" --ostype MacOS1013_64
-    VBoxManage modifyvm "$VM" --usbxhci on --memory 4096 --vram 128 --cpus 2 --firmware efi --chipset ich9 --mouse usbtablet --keyboard usb
-    VBoxManage setextradata "$VM" "CustomVideoMode1" "1680x1050x32"
-    VBoxManage setextradata "$VM" VBoxInternal2/EfiGraphicsResolution 1680x1050
+    VBoxManage modifyvm "$VM" --usbxhci on --memory "$VM_RAM" --vram "$VM_VRAM" --cpus "$VM_CPU" --firmware efi --chipset ich9 --mouse usbtablet --keyboard usb
+    VBoxManage setextradata "$VM" "CustomVideoMode1" "${VM_RES}x32"
+    VBoxManage setextradata "$VM" VBoxInternal2/EfiGraphicsResolution $VM_RES
     VBoxManage storagectl "$VM" --name "SATA Controller" --add sata --controller IntelAHCI --hostiocache on
     VBoxManage storageattach "$VM" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$VM_DIR/$VM.vdi"
     VBoxManage storageattach "$VM" --storagectl "SATA Controller" --port 1 --device 0 --type dvddrive --medium "$DST_CLOVER.iso"
