@@ -24,7 +24,7 @@ readonly VM_RAM="4096"
 readonly VM_VRAM="128"
 readonly VM_CPU="2"
 readonly DST_DMG="$DST_DIR/$VM.dmg"
-readonly DST_CLOVER="$DST_DIR/{$VM}Clover"
+readonly DST_CLOVER="$DST_DIR/${VM}Clover"
 readonly DST_VOL="/Volumes/$VM"
 readonly DST_ISO="$DST_DIR/$VM.iso.cdr"
 readonly FILE_EFI="$DST_DIR/apfs.efi"
@@ -198,7 +198,7 @@ cleanup() {
 
 main() {
   if [ "$1" = "clean" ]; then
-    rm -f Clover-v2.4k-4533-X64.iso clover.tar* "$DST_DIR/macOS-Mojave.dmg" "$DST_DIR/macOS-MojaveClover.iso" "$DST_DIR/macOS-MojaveClover.dmg" "$DST_DIR/macOS-Mojave.iso.cdr" "$FILE_EFI" || true
+    rm -f Clover-v2.4k-4533-X64.iso clover.tar* "$DST_CLOVER.iso" "$DST_CLOVER.dmg" "$DST_ISO" "$FILE_EFI" || true
   fi
   if [ "$1" = "stash" ]; then
     VBoxManage unregistervm --delete "$VM" || true
