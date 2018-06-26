@@ -12,8 +12,9 @@
 ###############################################################################
 
 # Core parameters #############################################################
-readonly INST_VER="Install macOS Mojave Beta"
-readonly INST_BIN="/Applications/$INST_VER.app/Contents/Resources/createinstallmedia"
+readonly INST_VERS="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*'|wc -l|tr -d '[:space:]')"
+readonly INST_VER="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' -print -quit)"
+readonly INST_BIN="$INST_VER/Contents/Resources/createinstallmedia"
 readonly DST_DIR="/tmp"
 readonly DST_DMG="$DST_DIR/macOS-Mojave.dmg"
 readonly DST_CLOVER="$DST_DIR/macOS-MojaveClover"
@@ -28,7 +29,15 @@ readonly VM_SIZE="32768"
 
 # Define methods ##############################################################
 runChecks() {
-  echo "Running checks..."
+  echo "Running checks (1 second)..."
+  if [ "$INST_VERS" = "0" ]; then
+    echo "ERROR: No macOS installer found. Please download from https://beta.apple.com/"
+    exit 6
+  fi
+  if [ ! "$INST_VERS" = "1" ]; then
+    echo "ERROR: $INST_VERS macOS installers found. Don't know which one to select."
+    exit 7
+  fi
   if [ ! -x "$INST_BIN" ]; then
     echo "ERROR: '$INST_BIN' not found."
     exit 1
@@ -51,19 +60,29 @@ runChecks() {
   fi
 }
 
+
+ejectAll() {
+	OIFS="$IFS"
+	IFS=$'\n'
+    for i in $(hdiutil info|grep -i 'Install macOS'|awk '{print $1}'); do
+        hdiutil detach $i 2>/dev/null || true
+    done
+	IFS="$OIFS"
+}
+
 createImage() {
-  echo -n "Creating image '$DST_DMG' (will need sudo)..."
+  echo -n "Creating image '$DST_DMG' (20 seconds, will need sudo)..."
   if [ ! -e "$DST_DMG" ]; then
     echo "."
-    hdiutil detach "/Volumes/$INST_VER/" 2>/dev/null || true
+    ejectAll
     hdiutil create -o "$DST_DMG" -size 10g -layout SPUD -fs HFS+J &&
       hdiutil attach "$DST_DMG" -mountpoint "$DST_VOL" &&
       sudo "$INST_BIN" --nointeraction --volume "$DST_VOL"
-    hdiutil detach "/Volumes/$INST_VER/" 2>/dev/null || true
+    ejectAll
   else
     echo "already exists."
   fi
-  echo -n "Creating iso '$DST_ISO'..."
+  echo -n "Creating iso '$DST_ISO' (10 seconds)..."
   if [ ! -e "$DST_ISO" ]; then
     echo "."
     hdiutil convert "$DST_DMG" -format UDTO -o "$DST_ISO"
@@ -73,24 +92,25 @@ createImage() {
 }
 
 extractAPFS() {
-  echo -n "Extracting APFS EFI driver..."
+  echo -n "Extracting APFS EFI driver (3 seconds)..."
   if [ ! -e "$FILE_EFI" ]; then
     echo "."
-    hdiutil detach "/Volumes/OS X Base System/" 2>/dev/null || true
-    hdiutil attach "/Applications/$INST_VER.app/Contents/SharedSupport/BaseSystem.dmg" &&
+    ejectAll
+    hdiutil attach "$INST_VER/Contents/SharedSupport/BaseSystem.dmg" &&
       cp /Volumes/OS\ X\ Base\ System/usr/standalone/i386/apfs.efi "$FILE_EFI"
-    hdiutil detach "/Volumes/OS X Base System/" 2>/dev/null || true
+    ejectAll
   else
     echo "already exists."
   fi
 }
 
 createClover() {
-  echo -n "Creating clover image '$DST_CLOVER.iso'..."
+  echo -n "Creating clover image '$DST_CLOVER.iso' (30 seconds)..."
   if [ ! -e "$DST_CLOVER.iso" ]; then
     echo "."
     extractAPFS
     curl -Lk https://sourceforge.net/projects/cloverefiboot/files/Bootable_ISO/CloverISO-4533.tar.lzma/download -o clover.tar.lzma
+    if [ ! -f "clover.tar.lzma" ]; then echo "ERROR: Could not download clover."; exit 8; fi
     xz -d clover.tar.lzma
     tar xf clover.tar
     hdiutil detach /Volumes/Clover-v2.4k-4533-X64/ 2>/dev/null || true
@@ -113,14 +133,14 @@ setupVM() {
   if [ ! -e "$VM_DIR" ]; then
     mkdir -p "$VM_DIR"
   fi
-  echo -n "Creating VM HDD '$VM_DIR/$VM.vdi'..."
+  echo -n "Creating VM HDD '$VM_DIR/$VM.vdi' (5 seconds)..."
   if [ ! -e "$VM_DIR/$VM.vdi" ]; then
     echo "."
     VBoxManage createhd --filename "$VM_DIR/$VM.vdi" --variant Standard --size "$VM_SIZE"
   else
     echo "already exists."
   fi
-  echo -n "Creating VM '$VM'..."
+  echo -n "Creating VM '$VM' (2 seconds)..."
   if ! VBoxManage showvminfo "$VM" >/dev/null 2>&1; then
     echo "."
     VBoxManage createvm --register --name "$VM" --ostype MacOS1013_64
@@ -137,11 +157,10 @@ setupVM() {
 }
 
 runVM() {
-  echo -n "Starting VM '$VM'..."
+  echo -n "Starting VM '$VM' (3 minutes)..."
   if ! VBoxManage showvminfo 'macOS-Mojave' | grep "State:" | grep -i running >/dev/null; then
     echo "."
     VBoxManage startvm "$VM" --type gui
-    echo "Bootup takes around 3 minutes..."
     echo "Next steps:"
     echo "  1. Disk Utility: erase the virtual drive using APFS and call it 'Mojave' (it will be converted otherwise)"
     echo "  2. Install macOS: on the erased virtual drive 'Mojave' (around 4 minutes)"
@@ -158,6 +177,7 @@ cleanup() {
   local linecallfunc="${3:-}"
   local command="${4:-}"
   local funcstack="${5:-}"
+  ejectAll
   if [[ "$err" -ne "0" ]]; then
     echo 2>&1 "ERROR: line $line - command '$command' exited with status: $err."
     echo 2>&1 "ERROR: In $funcstack called at line $linecallfunc."
@@ -173,7 +193,6 @@ main() {
     VBoxManage unregistervm --delete "$VM" || true
   fi
   if [ "$1" = "" ]; then
-    echo "Setup takes around 2 minutes..."
     runChecks
     createImage
     createClover
