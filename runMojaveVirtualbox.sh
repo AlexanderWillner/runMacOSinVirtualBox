@@ -12,7 +12,7 @@
 ###############################################################################
 
 # Core parameters #############################################################
-readonly INST_VERS="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*'|wc -l|tr -d '[:space:]')"
+readonly INST_VERS="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' | wc -l | tr -d '[:space:]')"
 readonly INST_VER="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' -print -quit)"
 readonly INST_BIN="$INST_VER/Contents/Resources/createinstallmedia"
 readonly DST_DIR="/tmp"
@@ -59,7 +59,7 @@ runChecks() {
     echo "ERROR: 'xz' not installed."
     exit 3
   fi
-  if [ "$(VBoxManage list extpacks|grep 'USB 3.0')" = "" ]; then
+  if [ "$(VBoxManage list extpacks | grep 'USB 3.0')" = "" ]; then
     echo "ERROR: VirtualBox USB 3.0 Extension Pack not installed."
     exit 4
   fi
@@ -69,18 +69,14 @@ runChecks() {
   fi
 }
 
-
 ejectAll() {
-	OIFS="$IFS"
-	IFS=$'\n'
-    for i in $(hdiutil info|grep -i 'Install macOS'|awk '{print $1}'); do
-        hdiutil detach "$i" 2>/dev/null || true
-    done
-    for i in $(hdiutil info|grep -i 'OS X Base System'|awk '{print $1}'); do
-        hdiutil detach "$i" 2>/dev/null || true
-    done
-    hdiutil detach "$DST_VOL" 2>/dev/null || true
-	IFS="$OIFS"
+  hdiutil info | grep 'Install macOS' | awk '{print $1}' | while read -r i; do
+    hdiutil detach "$i" 2>/dev/null || true
+  done
+  hdiutil info | grep 'OS X Base System' | awk '{print $1}' | while read -r i; do
+    hdiutil detach "$i" 2>/dev/null || true
+  done
+  hdiutil detach "$DST_VOL" 2>/dev/null || true
 }
 
 createImage() {
