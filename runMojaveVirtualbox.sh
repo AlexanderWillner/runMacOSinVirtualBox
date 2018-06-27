@@ -76,6 +76,9 @@ ejectAll() {
   hdiutil info | grep 'OS X Base System' | awk '{print $1}' | while read -r i; do
     hdiutil detach "$i" 2>/dev/null || true
   done
+  hdiutil info | grep 'InstallESD' | awk '{print $1}' | while read -r i; do
+    hdiutil detach "$i" 2>/dev/null || true
+  done
   hdiutil detach "$DST_VOL" 2>/dev/null || true
 }
 
