@@ -4,7 +4,13 @@
 
 Simple script to automatically install and run macOS 10.14 Mojave on VirtualBox. Since VirtualBox 5.2 does not support booting from APFS volumes, this script is using the [Clover EFI bootloader](https://sourceforge.net/projects/cloverefiboot/) as a workaround.
 
-## Quick Guide
+## ToC
+
+ * [Quick Guide](#quick-guide)
+ * [Step by Step Guide](#step-by-step-guide)
+ * [FAQ](#faq)
+
+##  Quick Guide
 
 Execute ```make image``` to setup and run everything:
 
