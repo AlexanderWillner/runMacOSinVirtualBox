@@ -49,3 +49,15 @@ Some available commands:
 ![Install](img/install2.png)
 6. Enjoy macOS Mojave in Virtualbox:
 ![Running macOS 10.14 Mojave Beta 1 in VirtualBox 5.2](img/macosMojaveBeta1.png)
+
+## FAQ
+
+* Reboot
+  * Q: I see the message ```MACH Reboot```. What should I do?
+  * A: The VM just starts to restart. Restart manually.
+* Installation Loop
+  * Q: After starting the installation the VM restarts and I see the installer again.
+  * A: Switch off the VM and go to step 4.
+* Kernel Panic
+  * Q: I see the message ```Error loading kernel cache (0x9)```. What should I do?
+  * A: Restart the VM. This error is shown from time to time.
