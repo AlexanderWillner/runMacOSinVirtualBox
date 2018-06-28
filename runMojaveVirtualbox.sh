@@ -53,20 +53,29 @@ runChecks() {
     echo "ERROR: '$INST_BIN' not found."
     exit 1
   fi
-  if ! type VBoxManage >/dev/null 2>&1; then
+  if type VBoxManage >/dev/null 2>&1; then
     echo "ERROR: 'VBoxManage' not installed. Trying to install automatically, if you've brew installed..."
-    if ! type brew >/dev/null 2>&1; then brew cask install virtualbox ; fi
-    exit 2
+    if ! type brew >/dev/null 2>&1; then
+      brew cask install virtualbox || exit 2
+    else
+      exit 2
+    fi
   fi
   if ! type xz >/dev/null 2>&1; then
     echo "ERROR: 'xz' not installed. Trying to install automatically, if you've brew installed..."
-    if ! type brew >/dev/null 2>&1; then brew install xz ; fi
-    exit 3
+    if type brew >/dev/null 2>&1 ; then 
+      brew install xz || exit 3
+    else
+      exit 3
+    fi
   fi
   if [ "$(VBoxManage list extpacks | grep 'USB 3.0')" = "" ]; then
     echo "ERROR: VirtualBox USB 3.0 Extension Pack not installed. Trying to install automatically, if you've brew installed..."
-    if ! type brew >/dev/null 2>&1; then brew cask install virtualbox-extension-pack ; fi
-    exit 4
+    if type brew >/dev/null 2>&1; then 
+      brew cask install virtualbox-extension-pack || exit 4
+    else
+      exit 4
+    fi
   fi
   if [ ! -f "$FILE_CFG" ]; then
     echo "ERROR: '$FILE_CFG' not found. Not checked out?"
