@@ -35,7 +35,8 @@ readonly FILE_CFG="config.plist"
 runChecks() {
   echo "Running checks (1 second)..."
   if [ "$INST_VERS" = "0" ]; then
-    echo "ERROR: No macOS installer found. Please download from https://beta.apple.com/"
+    echo "ERROR: No macOS installer found. Opening the web page for you..."
+    open 'https://beta.apple.com/sp/betaprogram/redemption#macos'
     exit 6
   fi
   if [ ! "$INST_VERS" = "1" ]; then
@@ -44,7 +45,8 @@ runChecks() {
   fi
   if [ ! -d "$INST_VER/Contents/SharedSupport/" ]; then
     echo "ERROR: Seems you've downloaded the macOS Stub Installer. Please download the full installer (google the issue)."
-    echo "Suggestion: Follow Step 2 (Download the macOS Public Beta Access Utility) from https://beta.apple.com/sp/betaprogram/redemption#macos."
+    echo "Suggestion: Follow Step 2 (Download the macOS Public Beta Access Utility). Opening the web page for you..."
+    open 'https://beta.apple.com/sp/betaprogram/redemption#macos'
     exit 8
   fi
   if [ ! -x "$INST_BIN" ]; then
@@ -52,15 +54,18 @@ runChecks() {
     exit 1
   fi
   if ! type VBoxManage >/dev/null 2>&1; then
-    echo "ERROR: 'VBoxManage' not installed."
+    echo "ERROR: 'VBoxManage' not installed. Trying to install automatically, if you've brew installed..."
+    if ! type brew >/dev/null 2>&1; then brew cask install virtualbox ; fi
     exit 2
   fi
   if ! type xz >/dev/null 2>&1; then
-    echo "ERROR: 'xz' not installed."
+    echo "ERROR: 'xz' not installed. Trying to install automatically, if you've brew installed..."
+    if ! type brew >/dev/null 2>&1; then brew install xz ; fi
     exit 3
   fi
   if [ "$(VBoxManage list extpacks | grep 'USB 3.0')" = "" ]; then
-    echo "ERROR: VirtualBox USB 3.0 Extension Pack not installed."
+    echo "ERROR: VirtualBox USB 3.0 Extension Pack not installed. Trying to install automatically, if you've brew installed..."
+    if ! type brew >/dev/null 2>&1; then brew cask install virtualbox-extension-pack ; fi
     exit 4
   fi
   if [ ! -f "$FILE_CFG" ]; then
