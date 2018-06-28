@@ -60,10 +60,10 @@ Some available commands:
 
 * Reboot
   * Q: I see the message ```MACH Reboot```. What should I do?
-  * A: The VM just starts to restart. Restart manually.
+  * A: The VM failed to restart. Restart manually.
 * Installation Loop
   * Q: After starting the installation the VM restarts and I see the installer again.
-  * A: Switch off the VM and go to step 4.
+  * A: You forgot to remove the installation CD. Switch off the VM and go to step 4.
 * Kernel Panic
   * Q: I see the message ```Error loading kernel cache (0x9)```. What should I do?
-  * A: Restart the VM. This error is shown from time to time.
+  * A: This error is shown from time to time. Restart the VM.
