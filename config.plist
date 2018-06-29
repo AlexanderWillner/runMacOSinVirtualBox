@@ -146,7 +146,7 @@
 		<key>Debug</key>
 		<false/>
 		<key>FakeCPUID</key>
-		<string>0x0506E3</string>
+		<string>0x0106E0</string>
 		<key>KernelCpu</key>
 		<false/>
 		<key>KernelLapic</key>
