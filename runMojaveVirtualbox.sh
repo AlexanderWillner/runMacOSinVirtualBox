@@ -53,7 +53,7 @@ runChecks() {
     echo "ERROR: '$INST_BIN' not found."
     exit 1
   fi
-  if type VBoxManage >/dev/null 2>&1; then
+  if ! type VBoxManage >/dev/null 2>&1; then
     echo "ERROR: 'VBoxManage' not installed. Trying to install automatically, if you've brew installed..."
     if ! type brew >/dev/null 2>&1; then
       brew cask install virtualbox || exit 2
