@@ -12,18 +12,17 @@ Simple script to automatically install and run macOS 10.14 Mojave on VirtualBox.
 
 ##  Quick Guide
 
-Execute ```make image``` to setup and run everything:
+Execute ```make all``` to setup and run everything:
 
 ```
-$ make image
-Setup takes around 2 minutes...
-Running checks...
-Creating image '/tmp/macOS-Mojave.dmg' (will need sudo)...already exists.
-Creating iso '/tmp/macOS-Mojave.iso.cdr'...already exists.
-Creating clover image '/tmp/macOS-MojaveClover.iso'...already exists.
-Creating VM HDD '/Users/me/VirtualBox VMs/macOS-Mojave/macOS-Mojave.vdi'...already exists.
-Creating VM 'macOS-Mojave'...already exists.
-Starting VM 'macOS-Mojave'...already running.
+$ make all
+Running checks (1 second)...
+Creating image '/tmp/macOS-Mojave.dmg' (20 seconds, will need sudo)...already exists.
+Creating iso '/tmp/macOS-Mojave.iso.cdr' (10 seconds)...already exists.
+Creating clover image '/tmp/macOS-MojaveClover.iso' (30 seconds)...already exists.
+Creating VM HDD '/Users/awi/VirtualBox VMs/macOS-Mojave/macOS-Mojave.vdi' (5 seconds)...already exists.
+Creating VM 'macOS-Mojave' (2 seconds)...already exists.
+Starting VM 'macOS-Mojave' (3 minutes)...already running.
 ```
 
 Execute ```make``` to get some help:
@@ -31,7 +30,12 @@ Execute ```make``` to get some help:
 ```
 $ make
 Some available commands:
- * image    : create macOS installer image, clover boot image, VM and disk
+ * all      : run everything needed (check, installer, clover, vm, run)
+ * check    : check environment
+ * installer: create macOS installer image
+ * clover   : create clover boot image
+ * vm       : create VM and disk
+ * run      : run VM
  * clean    : delete generated images and downloaded files
  * stash    : delete generated VM and disk
  * test     : test shell scripts
