@@ -158,7 +158,7 @@ createClover() {
   fi
 }
 
-setupVM() {
+createVM() {
   if [ ! -e "$VM_DIR" ]; then
     mkdir -p "$VM_DIR"
   fi
@@ -217,16 +217,22 @@ cleanup() {
 main() {
   if [ "$1" = "clean" ]; then
     rm -f Clover-v2.4k-4533-X64.iso clover.tar* "$DST_CLOVER.iso" "$DST_CLOVER.dmg" "$DST_DMG" "$DST_ISO" "$FILE_EFI" || true
-  fi
-  if [ "$1" = "stash" ]; then
+  elif [ "$1" = "stash" ]; then
     VBoxManage unregistervm --delete "$VM" || true
-  fi
-  if [ "$1" = "" ]; then
+  elif [ "$1" = "check" ]; then
     runChecks
+  elif [ "$1" = "installer" ]; then
     createImage
+  elif [ "$1" = "clover" ]; then
     createClover
-    setupVM
+  elif [ "$1" = "vm" ]; then
+    createVM
+  elif [ "$1" = "run" ]; then
     runVM
+  elif [ "$1" = "all" ]; then
+    runChecks && createImage && createClover && createVM && runVM
+  else
+    echo "Possible commands: clean, stash, all, check, installer, clover, vm, run"
   fi
 }
 ###############################################################################
