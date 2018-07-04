@@ -133,10 +133,13 @@ ejectAll() {
 }
 
 createImage() {
-  info "Creating image '$DST_DMG' (around 20 seconds, will need sudo)..."
+  version="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$INST_VER/Contents/Info.plist")"
+  info "Creating image '$DST_DMG' (around 20 seconds, version $version, will need sudo)..."
   if [ ! -e "$DST_DMG" ]; then
     result "."
     ejectAll
+    
+
     hdiutil create -o "$DST_DMG" -size 10g -layout SPUD -fs HFS+J &&
       hdiutil attach "$DST_DMG" -mountpoint "$DST_VOL" &&
       sudo "$INST_BIN" --nointeraction --volume "$DST_VOL"
