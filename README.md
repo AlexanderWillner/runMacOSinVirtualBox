@@ -1,8 +1,8 @@
-# Run macOS 10.14 Mojave on VirtualBox
+# Run macOS 10.14 Mojave on VirtualBox on macOS
 
 ## Overview
 
-Simple script to automatically install and run macOS 10.14 Mojave on VirtualBox. Since VirtualBox 5.2 does not support booting from APFS volumes, this script is using the [Clover EFI bootloader](https://sourceforge.net/projects/cloverefiboot/) as a workaround.
+Simple script to automatically install and run macOS 10.14 Mojave on VirtualBox on macOS. Since VirtualBox 5.2 does not support booting from APFS volumes, this script is using the [Clover EFI bootloader](https://sourceforge.net/projects/cloverefiboot/) as a workaround.
 
 ## ToC
 
@@ -15,14 +15,21 @@ Simple script to automatically install and run macOS 10.14 Mojave on VirtualBox.
 Execute ```make all``` to setup and run everything:
 
 ```
-$ make all
-Running checks (1 second)...
-Creating image '/tmp/macOS-Mojave.dmg' (20 seconds, will need sudo)...already exists.
-Creating iso '/tmp/macOS-Mojave.iso.cdr' (10 seconds)...already exists.
-Creating clover image '/tmp/macOS-MojaveClover.iso' (30 seconds)...already exists.
-Creating VM HDD '/Users/awi/VirtualBox VMs/macOS-Mojave/macOS-Mojave.vdi' (5 seconds)...already exists.
-Creating VM 'macOS-Mojave' (2 seconds)...already exists.
-Starting VM 'macOS-Mojave' (3 minutes)...already running.
+$ time make all
+Running checks (around 1 second)....
+Creating image '/tmp/macOS-Mojave.dmg' (around 20 seconds, will need sudo)....
+Password:
+Creating iso '/tmp/macOS-Mojave.iso.cdr' (around 25 seconds)....
+Creating clover image '/tmp/macOS-MojaveClover.iso' (around 30 seconds)....
+ - Extracting APFS EFI driver (around 3 seconds)....
+ - Downloading Clover (needs Internet access)...
+Creating VM HDD '/Users/awi/VirtualBox VMs/macOS-Mojave/macOS-Mojave.vdi' (around 5 seconds)....
+Creating VM 'macOS-Mojave' (around 2 seconds)....
+Starting VM 'macOS-Mojave' (around 3 minutes in the VM)....
+
+real	1m21.689s
+user	0m19.641s
+sys	0m14.779s
 ```
 
 Execute ```make``` to get some help:

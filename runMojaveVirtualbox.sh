@@ -11,6 +11,7 @@
 # Source  : https://github.com/AlexanderWillner/runMacOSinVirtualBox
 ###############################################################################
 
+
 # Core parameters #############################################################
 readonly INST_VERS="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' | wc -l | tr -d '[:space:]')"
 readonly INST_VER="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' -print -quit)"
@@ -29,32 +30,67 @@ readonly DST_VOL="/Volumes/$VM"
 readonly DST_ISO="$DST_DIR/$VM.iso.cdr"
 readonly FILE_EFI="$DST_DIR/apfs.efi"
 readonly FILE_CFG="config.plist"
+readonly FILE_LOG="$HOME/Desktop/runMojaveVirtualbox.log"
 ###############################################################################
 
+
+# Logging #####################################################################
+exec 3>&1
+exec 4>&2
+exec 1>>"$FILE_LOG"
+exec 2>&1
+###############################################################################
+
+
 # Define methods ##############################################################
+debug() {
+  echo "DEBUG: $1" >&3
+  log "$1"
+}
+
+error() {
+  echo "ERROR: $1" >&4
+  log "$1"
+}
+
+info() {
+  echo -n "$1" >&3
+  log "$1"
+}
+
+result() {
+  echo "$1" >&3
+  log "$1"
+}
+
+log() {
+  datestring="$(date +'%Y-%m-%d %H:%M:%S')"
+  echo "[$datestring] $1" >> "$FILE_LOG"
+}
+
 runChecks() {
-  echo "Running checks (1 second)..."
+  info "Running checks (around 1 second)..."; result "."
   if [ "$INST_VERS" = "0" ]; then
-    echo "ERROR: No macOS installer found. Opening the web page for you..."
+    error "No macOS installer found. Opening the web page for you..."
     open 'https://beta.apple.com/sp/betaprogram/redemption#macos'
     exit 6
   fi
   if [ ! "$INST_VERS" = "1" ]; then
-    echo "ERROR: $INST_VERS macOS installers found. Don't know which one to select."
+    error "$INST_VERS macOS installers found. Don't know which one to select."
     exit 7
   fi
   if [ ! -d "$INST_VER/Contents/SharedSupport/" ]; then
-    echo "ERROR: Seems you've downloaded the macOS Stub Installer. Please download the full installer (google the issue)."
-    echo "Suggestion: Follow Step 2 (Download the macOS Public Beta Access Utility). Opening the web page for you..."
+    error "Seems you've downloaded the macOS Stub Installer. Please download the full installer (google the issue)."
+    debug "Follow Step 2 (Download the macOS Public Beta Access Utility). Opening the web page for you..."
     open 'https://beta.apple.com/sp/betaprogram/redemption#macos'
     exit 8
   fi
   if [ ! -x "$INST_BIN" ]; then
-    echo "ERROR: '$INST_BIN' not found."
+    error "'$INST_BIN' not found."
     exit 1
   fi
   if ! type VBoxManage >/dev/null 2>&1; then
-    echo "ERROR: 'VBoxManage' not installed. Trying to install automatically, if you've brew installed..."
+    error "'VBoxManage' not installed. Trying to install automatically, if you've brew installed..."
     if ! type brew >/dev/null 2>&1; then
       brew cask install virtualbox || exit 2
     else
@@ -62,7 +98,7 @@ runChecks() {
     fi
   fi
   if ! type xz >/dev/null 2>&1; then
-    echo "ERROR: 'xz' not installed. Trying to install automatically, if you've brew installed..."
+    error "'xz' not installed. Trying to install automatically, if you've brew installed..."
     if type brew >/dev/null 2>&1 ; then 
       brew install xz || exit 3
     else
@@ -70,7 +106,7 @@ runChecks() {
     fi
   fi
   if [ "$(VBoxManage list extpacks | grep 'USB 3.0')" = "" ]; then
-    echo "ERROR: VirtualBox USB 3.0 Extension Pack not installed. Trying to install automatically, if you've brew installed..."
+    error "VirtualBox USB 3.0 Extension Pack not installed. Trying to install automatically, if you've brew installed..."
     if type brew >/dev/null 2>&1; then 
       brew cask install virtualbox-extension-pack || exit 4
     else
@@ -78,7 +114,7 @@ runChecks() {
     fi
   fi
   if [ ! -f "$FILE_CFG" ]; then
-    echo "ERROR: '$FILE_CFG' not found. Not checked out?"
+    error "'$FILE_CFG' not found. Not checked out?"
     exit 5
   fi
 }
@@ -97,46 +133,46 @@ ejectAll() {
 }
 
 createImage() {
-  echo -n "Creating image '$DST_DMG' (20 seconds, will need sudo)..."
+  info "Creating image '$DST_DMG' (around 20 seconds, will need sudo)..."
   if [ ! -e "$DST_DMG" ]; then
-    echo "."
+    result "."
     ejectAll
     hdiutil create -o "$DST_DMG" -size 10g -layout SPUD -fs HFS+J &&
       hdiutil attach "$DST_DMG" -mountpoint "$DST_VOL" &&
       sudo "$INST_BIN" --nointeraction --volume "$DST_VOL"
     ejectAll
   else
-    echo "already exists."
+    result "already exists."
   fi
-  echo -n "Creating iso '$DST_ISO' (10 seconds)..."
+  info "Creating iso '$DST_ISO' (around 25 seconds)..."
   if [ ! -e "$DST_ISO" ]; then
-    echo "."
+    result "."
     hdiutil convert "$DST_DMG" -format UDTO -o "$DST_ISO"
   else
-    echo "already exists."
+    result "already exists."
   fi
 }
 
 extractAPFS() {
-  echo -n "Extracting APFS EFI driver (3 seconds)..."
+  info " - Extracting APFS EFI driver (around 3 seconds)..."
   if [ ! -e "$FILE_EFI" ]; then
-    echo "."
+    result "."
     ejectAll
     hdiutil attach "$INST_VER/Contents/SharedSupport/BaseSystem.dmg" &&
       cp /Volumes/OS\ X\ Base\ System/usr/standalone/i386/apfs.efi "$FILE_EFI"
     ejectAll
   else
-    echo "already exists."
+    result "already exists."
   fi
 }
 
 createClover() {
-  echo -n "Creating clover image '$DST_CLOVER.iso' (30 seconds)..."
+  info "Creating clover image '$DST_CLOVER.iso' (around 30 seconds)..."
   if [ ! -e "$DST_CLOVER.iso" ]; then
-    echo "."
+    result "."
     extractAPFS
     while [ ! -f "clover.tar.lzma" ]; do
-      echo "Downloading Clover (needs Internet access)..."
+      result " - Downloading Clover (needs Internet access)..."
       curl -Lk https://sourceforge.net/projects/cloverefiboot/files/Bootable_ISO/CloverISO-4533.tar.lzma/download -o clover.tar.lzma
       sleep 1
     done
@@ -154,7 +190,7 @@ createClover() {
     hdiutil detach /Volumes/NO\ NAME/
     hdiutil makehybrid -iso -joliet -o "$DST_CLOVER.iso" "$DST_CLOVER.dmg"
   else
-    echo "already exists."
+    result "already exists."
   fi
 }
 
@@ -162,16 +198,16 @@ createVM() {
   if [ ! -e "$VM_DIR" ]; then
     mkdir -p "$VM_DIR"
   fi
-  echo -n "Creating VM HDD '$VM_DIR/$VM.vdi' (5 seconds)..."
+  info "Creating VM HDD '$VM_DIR/$VM.vdi' (around 5 seconds)..."
   if [ ! -e "$VM_DIR/$VM.vdi" ]; then
-    echo "."
+    result "."
     VBoxManage createhd --filename "$VM_DIR/$VM.vdi" --variant Standard --size "$VM_SIZE"
   else
-    echo "already exists."
+    result "already exists."
   fi
-  echo -n "Creating VM '$VM' (2 seconds)..."
+  info "Creating VM '$VM' (around 2 seconds)..."
   if ! VBoxManage showvminfo "$VM" >/dev/null 2>&1; then
-    echo "."
+    result "."
     VBoxManage createvm --register --name "$VM" --ostype MacOS1013_64
     VBoxManage modifyvm "$VM" --usbxhci on --memory "$VM_RAM" --vram "$VM_VRAM" --cpus "$VM_CPU" --firmware efi --chipset ich9 --mouse usbtablet --keyboard usb
     VBoxManage setextradata "$VM" "CustomVideoMode1" "${VM_RES}x32"
@@ -181,14 +217,14 @@ createVM() {
     VBoxManage storageattach "$VM" --storagectl "SATA Controller" --port 1 --device 0 --type dvddrive --medium "$DST_CLOVER.iso"
     VBoxManage storageattach "$VM" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --medium "$DST_ISO"
   else
-    echo "already exists."
+    result "already exists."
   fi
 }
 
 runVM() {
-  echo -n "Starting VM '$VM' (3 minutes)..."
+  info "Starting VM '$VM' (3 minutes in the VM)..."
   if ! VBoxManage showvminfo 'macOS-Mojave' | grep "State:" | grep -i running >/dev/null; then
-    echo "."
+    result "."
     VBoxManage startvm "$VM" --type gui
     echo "Next steps:"
     echo "  1. Disk Utility: erase the virtual drive using APFS and call it 'Mojave' (it will be converted otherwise)"
@@ -196,7 +232,7 @@ runVM() {
     echo "  3. After the reboot: switch off the VM, remove the virtual macOS installer CD-ROM and restart"
     echo "  4. Start macOS in the Clover boot menu (the initial installation might take a few hours)"
   else
-    echo "already running."
+    result "already running."
   fi
 }
 
@@ -208,15 +244,15 @@ cleanup() {
   local funcstack="${5:-}"
   ejectAll
   if [[ "$err" -ne "0" ]]; then
-    echo 2>&1 "ERROR: line $line - command '$command' exited with status: $err."
-    echo 2>&1 "ERROR: In $funcstack called at line $linecallfunc."
-    echo 2>&1 "DEBUG: From function ${funcstack[0]} (line $linecallfunc)."
+    error "line $line - command '$command' exited with status: $err."
+    error "In $funcstack called at line $linecallfunc."
+    debug "From function ${funcstack[0]} (line $linecallfunc)."
   fi
 }
 
 main() {
   if [ "$1" = "clean" ]; then
-    rm -f Clover-v2.4k-4533-X64.iso clover.tar* "$DST_CLOVER.iso" "$DST_CLOVER.dmg" "$DST_DMG" "$DST_ISO" "$FILE_EFI" || true
+    rm -f Clover-v2.4k-4533-X64.iso clover.tar* "$FILE_LOG" "$DST_CLOVER.iso" "$DST_CLOVER.dmg" "$DST_DMG" "$DST_ISO" "$FILE_EFI" || true
   elif [ "$1" = "stash" ]; then
     VBoxManage unregistervm --delete "$VM" || true
   elif [ "$1" = "check" ]; then
@@ -236,6 +272,7 @@ main() {
   fi
 }
 ###############################################################################
+
 
 # Run script ##################################################################
 [[ "${BASH_SOURCE[0]}" == "${0}" ]] && trap 'cleanup "${?}" "${LINENO}" "${BASH_LINENO}" "${BASH_COMMAND}" $(printf "::%s" ${FUNCNAME[@]:-})' EXIT && main "${@:-}"
