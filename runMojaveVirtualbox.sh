@@ -138,8 +138,6 @@ createImage() {
   if [ ! -e "$DST_DMG" ]; then
     result "."
     ejectAll
-    
-
     hdiutil create -o "$DST_DMG" -size 10g -layout SPUD -fs HFS+J &&
       hdiutil attach "$DST_DMG" -mountpoint "$DST_VOL" &&
       sudo "$INST_BIN" --nointeraction --volume "$DST_VOL"
