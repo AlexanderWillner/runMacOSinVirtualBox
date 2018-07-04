@@ -53,7 +53,7 @@ Some available commands:
  
 ## Step by Step Guide
 
-1. After executing ```make image``` you should have a configured VM:
+1. After executing ```make all``` you should have a configured and running VM:
 ![Images](img/images.png)
 2. After booting erase the virtual drive ```VBOX HARDDISK Media``` in Disk Utility using APFS and name it 'Mojave':
 ![Erase Disk](img/erase.png)
