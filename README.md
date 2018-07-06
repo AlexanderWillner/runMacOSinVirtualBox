@@ -14,11 +14,12 @@ Simple script to automatically install and run macOS 10.14 Mojave on VirtualBox 
 ##  Quick Guide
 
 [![RunMojaveVirtualbox.app](img/app.png)](https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases/download/1.0/RunMojaveVirtualbox.app.zip)
-Download and execute the app [```RunMojaveVirtualbox.app```](https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases/download/1.0/RunMojaveVirtualbox.app.zip).
+
+Download the app [```RunMojaveVirtualbox.app```](https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases/download/1.0/RunMojaveVirtualbox.app.zip) and move it to the Application folder. Then execute it.
  
 ## Step by Step Guide
 
-1. After executing ```make all``` you should have a configured and running VM:
+1. Around 2 minutes after execution you should have a configured and running VM:
 ![Images](img/images.png)
 2. After booting erase the virtual drive ```VBOX HARDDISK Media``` in Disk Utility using APFS and name it 'Mojave':
 ![Erase Disk](img/erase.png)
