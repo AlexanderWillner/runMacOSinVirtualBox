@@ -13,7 +13,7 @@
 
 # Core parameters #############################################################
 readonly PATH="$PATH:/usr/local/bin/:/usr/bin"
-readonly SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
+readonly SCRIPTPATH="$( cd "$(dirname "$0")" || exit; pwd -P )"
 readonly INST_VERS="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' | wc -l | tr -d '[:space:]')"
 readonly INST_VER="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' -print -quit)"
 readonly INST_BIN="$INST_VER/Contents/Resources/createinstallmedia"
