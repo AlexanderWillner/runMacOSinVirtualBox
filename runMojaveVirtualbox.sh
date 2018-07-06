@@ -11,8 +11,9 @@
 # Source  : https://github.com/AlexanderWillner/runMacOSinVirtualBox
 ###############################################################################
 
-
 # Core parameters #############################################################
+readonly PATH="$PATH:/usr/local/bin/:/usr/bin"
+readonly SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"
 readonly INST_VERS="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' | wc -l | tr -d '[:space:]')"
 readonly INST_VER="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' -print -quit)"
 readonly INST_BIN="$INST_VER/Contents/Resources/createinstallmedia"
@@ -29,7 +30,7 @@ readonly DST_CLOVER="$DST_DIR/${VM}Clover"
 readonly DST_VOL="/Volumes/$VM"
 readonly DST_ISO="$DST_DIR/$VM.iso.cdr"
 readonly FILE_EFI="$DST_DIR/apfs.efi"
-readonly FILE_CFG="config.plist"
+readonly FILE_CFG="$SCRIPTPATH/config.plist"
 readonly FILE_LOG="$HOME/Desktop/runMojaveVirtualbox.log"
 ###############################################################################
 
@@ -56,6 +57,13 @@ error() {
 info() {
   echo -n "$1" >&3
   log "$1"
+  if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then 
+    osascript -e 'tell application "ProgressDialog"' -e 'activate' \
+    		  -e 'set name of window 1 to "Installing macOS Mojave on Virtualbox"' \
+    		  -e 'set message of window 1 to "'"$1"'...'"$2"'%."' \
+    		  -e 'set percent of window 1 to ('"$2"')' \
+			  -e 'end tell'
+  fi
 }
 
 result() {
@@ -69,7 +77,7 @@ log() {
 }
 
 runChecks() {
-  info "Running checks (around 1 second)..."; result "."
+  info "Running checks (around 1 second)..." 0; result "."
   if [ "$INST_VERS" = "0" ]; then
     error "No macOS installer found. Opening the web page for you..."
     open 'https://beta.apple.com/sp/betaprogram/redemption#macos'
@@ -134,7 +142,7 @@ ejectAll() {
 
 createImage() {
   version="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$INST_VER/Contents/Info.plist")"
-  info "Creating image '$DST_DMG' (around 20 seconds, version $version, will need sudo)..."
+  info "Creating image '$DST_DMG' (around 20 seconds, version $version, will need sudo)..." 30
   if [ ! -e "$DST_DMG" ]; then
     result "."
     ejectAll
@@ -145,7 +153,7 @@ createImage() {
   else
     result "already exists."
   fi
-  info "Creating iso '$DST_ISO' (around 25 seconds)..."
+  info "Creating iso '$DST_ISO' (around 25 seconds)..." 40
   if [ ! -e "$DST_ISO" ]; then
     result "."
     hdiutil convert "$DST_DMG" -format UDTO -o "$DST_ISO"
@@ -155,7 +163,7 @@ createImage() {
 }
 
 extractAPFS() {
-  info " - Extracting APFS EFI driver (around 3 seconds)..."
+  info " - Extracting APFS EFI driver (around 10 seconds)..." 60
   if [ ! -e "$FILE_EFI" ]; then
     result "."
     ejectAll
@@ -168,12 +176,12 @@ extractAPFS() {
 }
 
 createClover() {
-  info "Creating clover image '$DST_CLOVER.iso' (around 30 seconds)..."
+  info "Creating clover image '$DST_CLOVER.iso' (around 30 seconds)..." 
   if [ ! -e "$DST_CLOVER.iso" ]; then
     result "."
     extractAPFS
     while [ ! -f "clover.tar.lzma" ]; do
-      result " - Downloading Clover (needs Internet access)..."
+      info " - Downloading Clover (needs Internet access)..." 80
       curl -Lk https://sourceforge.net/projects/cloverefiboot/files/Bootable_ISO/CloverISO-4533.tar.lzma/download -o clover.tar.lzma
       sleep 1
     done
@@ -199,14 +207,14 @@ createVM() {
   if [ ! -e "$VM_DIR" ]; then
     mkdir -p "$VM_DIR"
   fi
-  info "Creating VM HDD '$VM_DIR/$VM.vdi' (around 5 seconds)..."
+  info "Creating VM HDD '$VM_DIR/$VM.vdi' (around 5 seconds)..." 90
   if [ ! -e "$VM_DIR/$VM.vdi" ]; then
     result "."
     VBoxManage createhd --filename "$VM_DIR/$VM.vdi" --variant Standard --size "$VM_SIZE"
   else
     result "already exists."
   fi
-  info "Creating VM '$VM' (around 2 seconds)..."
+  info "Creating VM '$VM' (around 2 seconds)..." 99
   if ! VBoxManage showvminfo "$VM" >/dev/null 2>&1; then
     result "."
     VBoxManage createvm --register --name "$VM" --ostype MacOS1013_64
@@ -223,7 +231,7 @@ createVM() {
 }
 
 runVM() {
-  info "Starting VM '$VM' (3 minutes in the VM)..."
+  info "Starting VM '$VM' (3 minutes in the VM)..." 100
   if ! VBoxManage showvminfo 'macOS-Mojave' | grep "State:" | grep -i running >/dev/null; then
     result "."
     VBoxManage startvm "$VM" --type gui
@@ -235,6 +243,10 @@ runVM() {
   else
     result "already running."
   fi
+}
+
+runClean() {
+  rm -f Clover-v2.4k-4533-X64.iso clover.tar* "$FILE_LOG" "$DST_CLOVER.iso" "$DST_CLOVER.dmg" "$DST_DMG" "$DST_ISO" "$FILE_EFI" || true
 }
 
 cleanup() {
@@ -249,31 +261,29 @@ cleanup() {
     error "In $funcstack called at line $linecallfunc."
     debug "From function ${funcstack[0]} (line $linecallfunc)."
   fi
+  if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then 
+  	osascript -e 'tell application "ProgressDialog"' -e 'quit' -e 'end tell'; 
+  fi
 }
 
 main() {
-  if [ "$1" = "clean" ]; then
-    rm -f Clover-v2.4k-4533-X64.iso clover.tar* "$FILE_LOG" "$DST_CLOVER.iso" "$DST_CLOVER.dmg" "$DST_DMG" "$DST_ISO" "$FILE_EFI" || true
-  elif [ "$1" = "stash" ]; then
-    VBoxManage unregistervm --delete "$VM" || true
-  elif [ "$1" = "check" ]; then
-    runChecks
-  elif [ "$1" = "installer" ]; then
-    createImage
-  elif [ "$1" = "clover" ]; then
-    createClover
-  elif [ "$1" = "vm" ]; then
-    createVM
-  elif [ "$1" = "run" ]; then
-    runVM
-  elif [ "$1" = "all" ]; then
-    runChecks && createImage && createClover && createVM && runVM
-  else
-    echo "Possible commands: clean, stash, all, check, installer, clover, vm, run"
-  fi
+  while [ $# -ne 0 ] ; do
+    ARG="$1"
+    shift # get rid of $1, we saved in ARG already
+    case "$ARG" in
+    check) runChecks ;;
+    clean) runClean ;;
+    stash) VBoxManage unregistervm --delete "$VM" || true ;;
+    installer) createImage ;;
+    clover) createClover ;;
+    vm) createVM ;;
+    run) runVM ;;
+    all) runChecks && createImage && createClover && createVM && runVM ;;
+    *) echo "Possible commands: clean, stash, all, check, installer, clover, vm, run" >&4 ;;
+    esac
+  done
 }
 ###############################################################################
-
 
 # Run script ##################################################################
 [[ "${BASH_SOURCE[0]}" == "${0}" ]] && trap 'cleanup "${?}" "${LINENO}" "${BASH_LINENO}" "${BASH_COMMAND}" $(printf "::%s" ${FUNCNAME[@]:-})' EXIT && main "${@:-}"
