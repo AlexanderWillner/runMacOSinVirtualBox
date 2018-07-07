@@ -52,6 +52,13 @@ debug() {
 error() {
   echo "ERROR: $1" >&4
   log "$1"
+  if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then 
+    osascript -e 'tell application "ProgressDialog"' -e 'activate' \
+    		  -e 'set name of window 1 to "Installing macOS Mojave on Virtualbox"' \
+    		  -e 'set message of window 1 to "'"ERROR: $1"'."' \
+    		  -e 'set percent of window 1 to ('100')' \
+			  -e 'end tell'
+  fi
 }
 
 info() {
