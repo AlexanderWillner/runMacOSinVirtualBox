@@ -12,7 +12,7 @@
 ###############################################################################
 
 # Core parameters #############################################################
-readonly PATH="$PATH:/usr/local/bin/:/usr/bin"
+readonly PATH="$PATH:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin"
 readonly SCRIPTPATH="$( cd "$(dirname "$0")" || exit; pwd -P )"
 readonly INST_VERS="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' | wc -l | tr -d '[:space:]')"
 readonly INST_VER="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' -print -quit)"
