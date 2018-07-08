@@ -56,7 +56,7 @@ error() {
     osascript -e 'tell application "ProgressDialog"' -e 'activate' \
     		  -e 'set name of window 1 to "Installing macOS Mojave on Virtualbox"' \
     		  -e 'set message of window 1 to "'"ERROR: $1"'."' \
-    		  -e 'set percent of window 1 to ('100')' \
+    		  -e 'set percent of window 1 to (100)' \
 			  -e 'end tell'
   fi
 }
@@ -267,6 +267,7 @@ cleanup() {
     error "line $line - command '$command' exited with status: $err."
     error "In $funcstack called at line $linecallfunc."
     debug "From function ${funcstack[0]} (line $linecallfunc)."
+    debug "Look at $FILE_LOG for details."
   fi
   if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then 
   	osascript -e 'tell application "ProgressDialog"' -e 'quit' -e 'end tell'; 
@@ -274,7 +275,7 @@ cleanup() {
 }
 
 main() {
-  while [ $# -ne 0 ] ; do
+  while [ "$#" -ne 0 ] ; do
     ARG="$1"
     shift # get rid of $1, we saved in ARG already
     case "$ARG" in
