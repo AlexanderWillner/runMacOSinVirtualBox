@@ -31,7 +31,7 @@ readonly DST_VOL="/Volumes/$VM"
 readonly DST_ISO="$DST_DIR/$VM.iso.cdr"
 readonly FILE_EFI="$DST_DIR/apfs.efi"
 readonly FILE_CFG="$SCRIPTPATH/config.plist"
-readonly FILE_LOG="$HOME/Desktop/runMojaveVirtualbox.log"
+readonly FILE_LOG="$HOME/Library/Logs/runMojaveVirtualbox.log"
 ###############################################################################
 
 
@@ -87,8 +87,8 @@ runChecks() {
   info "Running checks (around 1 second)..." 0; result "."
   if [ "$INST_VERS" = "0" ]; then
     open 'https://beta.apple.com/sp/betaprogram/redemption#macos'
-    error "No macOS installer found. Opening the web page for you (press enter when done)..."
-    read
+    error "No macOS installer found. Opening the web page for you (press enter in the terminal when done)..."
+    read -r
     exit 6
   fi
   if [ ! "$INST_VERS" = "1" ]; then
@@ -98,8 +98,8 @@ runChecks() {
   if [ ! -d "$INST_VER/Contents/SharedSupport/" ]; then
     open 'https://beta.apple.com/sp/betaprogram/redemption#macos'
     error "Seems you've downloaded the macOS Stub Installer. Please download the full installer (google the issue)."
-    debug "Follow Step 2 (Download the macOS Public Beta Access Utility). Opening the web page for you (press enter when done)..."
-    read
+    debug "Follow Step 2 (Download the macOS Public Beta Access Utility). Opening the web page for you (press enter in the terminal when done)..."
+    read -r
     exit 8
   fi
   if [ ! -x "$INST_BIN" ]; then
@@ -131,8 +131,8 @@ runChecks() {
     fi
   fi
   if [ ! -f "$FILE_CFG" ]; then
-    error "'$FILE_CFG' not found. Not checked out? (press enter when done)..."
-    read
+    error "'$FILE_CFG' not found. Not checked out? (press enter in the terminal when done)..."
+    read -r
     exit 5
   fi
 }
@@ -270,7 +270,7 @@ cleanup() {
     error "line $line - command '$command' exited with status: $err."
     error "In $funcstack called at line $linecallfunc."
     debug "From function ${funcstack[0]} (line $linecallfunc)."
-    debug "Look at $FILE_LOG for details."
+    debug "Look at $FILE_LOG for details (or use Console.app)."
   fi
   if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then 
   	osascript -e 'tell application "ProgressDialog"' -e 'quit' -e 'end tell'; 
