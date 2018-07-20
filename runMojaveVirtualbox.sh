@@ -124,6 +124,11 @@ runChecks() {
       exit 3
     fi
   fi
+  awk >/dev/null 2>&1
+  if [ ! $? -eq 1 ]; then
+    error "Something is wrong with your 'awk' installation..."
+    exit 6
+  fi
   if [ "$(VBoxManage list extpacks | grep 'USB 3.0')" = "" ]; then
     error "VirtualBox USB 3.0 Extension Pack not installed. Trying to install automatically, if you've brew installed..."
     if type brew >/dev/null 2>&1; then
