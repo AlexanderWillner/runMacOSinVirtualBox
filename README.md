@@ -2,7 +2,7 @@
 
 ## Overview
 
-Simple script to automatically install and run macOS 10.14 Mojave on VirtualBox on macOS. Since VirtualBox 5.2 does not support booting from APFS volumes, this script is using the [Clover EFI bootloader](https://sourceforge.net/projects/cloverefiboot/) as a workaround.
+Simple script to automatically download, install and run macOS 10.14 Mojave on VirtualBox on macOS. Since VirtualBox 5.2 does not support booting from APFS volumes, this script is using the [Clover EFI bootloader](https://sourceforge.net/projects/cloverefiboot/) as a workaround.
 
 ## ToC
 
@@ -15,22 +15,23 @@ Simple script to automatically install and run macOS 10.14 Mojave on VirtualBox 
 
 [![RunMojaveVirtualbox.app](img/app.png)](https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases/download/1.0/RunMojaveVirtualbox.app.zip)
 
-Download the app [```RunMojaveVirtualbox.app```](https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases/download/1.0/RunMojaveVirtualbox.app.zip) and move it to the Applications folder. Then execute it.
+Download the app [```RunMojaveVirtualbox.app```](https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases/download/1.0/RunMojaveVirtualbox.app.zip) and move it to the Applications folder. Then execute it (via Cight Click > Open).
  
 ## Step by Step Guide
 
-1. Around 2 minutes after execution you should have a configured and running VM:
+1. [Download macOS Mojave Beta](https://beta.apple.com/sp/betaprogram/redemption#macos) first (the download page will be opened otherwise automatically)
+2. Around 2 minutes after executing this script/app you should have a configured and running VM:
 ![Images](img/images.png)
-2. After booting erase the virtual drive ```VBOX HARDDISK Media``` in Disk Utility using APFS and name it 'Mojave':
+3. After booting erase the virtual drive ```VBOX HARDDISK Media``` in Disk Utility using APFS and name it 'Mojave':
 ![Erase Disk](img/erase.png)
-3. Install macOS on the erased virtual drive 'Mojave' (around 4 minutes):
+4. Install macOS on the erased virtual drive 'Mojave' (around 4 minutes):
 ![Install](img/install.png)
-4. After the reboot switch off the VM and remove ```macOS-Mojave.iso.cdr``` and restart:
+5. After the reboot switch off the VM and remove ```macOS-Mojave.iso.cdr``` and restart:
 ![Remove](img/remove.png)
-5. Start macOS in the Clover boot menu (the initial installation might take some time):
+6. Start macOS in the Clover boot menu (the initial installation might take some time):
 ![Clover](img/clover.png)
 ![Install](img/install2.png)
-6. Enjoy macOS Mojave in Virtualbox:
+7. Enjoy macOS Mojave in Virtualbox:
 ![Running macOS 10.14 Mojave Beta 1 in VirtualBox 5.2](img/macosMojaveBeta1.png)
 
 ## Shell Hacker
@@ -84,3 +85,7 @@ Some available commands:
 * Kernel Panic
   * Q: I see the message ```Error loading kernel cache (0x9)```. What should I do?
   * A: This error is shown from time to time. Restart the VM.
+* Other Issue
+  * Q: Something is not working. What should I do?
+  * A: [Create a ticket](https://github.com/AlexanderWillner/runMacOSinVirtualBox/issues/new?template=bug_report.md)
+  
