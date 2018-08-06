@@ -14,6 +14,7 @@ help:
 	@echo " * test     : test shell scripts"
 	@echo " * style    : style shell scripts"
 	@echo " * harden   : harden shell scripts"
+	@echo " * release  : make new release"
 	@echo " * feedback : create a GitHub issue"
 
 image: all
@@ -61,4 +62,10 @@ dependencies:
 	@type shellharden >/dev/null 2>&1 || (echo "Run 'brew install shellharden' first." >&2 ; exit 1)
 	@type shfmt >/dev/null 2>&1 || (echo "Run 'brew install shfmt' first." >&2 ; exit 1)
 
-.PHONY: image clean feedback test harden style check
+release:
+	@cp runMojaveVirtualbox.sh app/RunMojaveVirtualbox.app/Contents/Resources/
+	@cd app; rm -f RunMojaveVirtualbox.app.zip || true
+	@cd app; zip -r RunMojaveVirtualbox.app.zip RunMojaveVirtualbox.app/
+	@open https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases
+
+.PHONY: image clean feedback test harden style check release
