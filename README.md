@@ -85,3 +85,7 @@ Some available commands:
 * Kernel Panic
   * Q: I see the message ```Error loading kernel cache (0x9)```. What should I do?
   * A: This error is shown from time to time. Restart the VM.
+* Other Issue
+  * Q: Something is not working. What should I do?
+  * A: [Create a ticket](https://github.com/AlexanderWillner/runMacOSinVirtualBox/issues/new?template=bug_report.md)
+  
