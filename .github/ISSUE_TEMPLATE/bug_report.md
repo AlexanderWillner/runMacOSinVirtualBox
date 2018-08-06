@@ -15,5 +15,5 @@ Steps to reproduce the behavior:
 A clear and concise description of what you expected to happen.
 
 **Additional context**
- - log file (see ```runMojaveVirtualbox.log```).
+ - log file (see ```~/Library/Logs/runMojaveVirtualbox.log``` that is accessible via ```Console.app```).
  - screen shot
