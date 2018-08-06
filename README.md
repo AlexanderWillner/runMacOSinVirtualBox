@@ -13,9 +13,9 @@ Simple script to automatically download, install and run macOS 10.14 Mojave on V
 
 ##  Quick Guide
 
-[![RunMojaveVirtualbox.app](img/app.png)](https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases/download/1.0/RunMojaveVirtualbox.app.zip)
+[![RunMojaveVirtualbox.app](img/app.png)](https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases/download/1.1/RunMojaveVirtualbox.app.zip)
 
-Download the app [```RunMojaveVirtualbox.app```](https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases/download/1.0/RunMojaveVirtualbox.app.zip) and move it to the Applications folder. Then execute it (via Cight Click > Open).
+Download the app [```RunMojaveVirtualbox.app```](https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases/download/1.1/RunMojaveVirtualbox.app.zip) and move it to the Applications folder. Then execute it (via Cight Click > Open).
  
 ## Step by Step Guide
 
