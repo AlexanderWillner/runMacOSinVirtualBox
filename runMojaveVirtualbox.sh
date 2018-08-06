@@ -54,7 +54,7 @@ error() {
   echo "ERROR: $1" >&4
   log "$1"
   if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
-    osascript -e 'tell application "ProgressDialog"' -e 'activate' \
+    osascript -e 'tell application "'"$SCRIPTPATH/ProgressDialog.app"'"' -e 'activate' \
       -e 'set name of window 1 to "Installing macOS Mojave on Virtualbox"' \
       -e 'set message of window 1 to "'"ERROR: $1"'."' \
       -e 'set percent of window 1 to (100)' \
@@ -66,7 +66,7 @@ info() {
   echo -n "$1" >&3
   log "$1"
   if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
-    osascript -e 'tell application "ProgressDialog"' -e 'activate' \
+    osascript -e 'tell application "'"$SCRIPTPATH/ProgressDialog.app"'"' -e 'activate' \
       -e 'set name of window 1 to "Installing macOS Mojave on Virtualbox"' \
       -e 'set message of window 1 to "'"$1"'...'"$2"'%."' \
       -e 'set percent of window 1 to ('"$2"')' \
@@ -88,6 +88,7 @@ runChecks() {
   info "Running checks (around 1 second)..." 0
   result "."
   if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
+    info "Opening GUI..." 0
     open "$SCRIPTPATH/ProgressDialog.app"
   fi
   if [ "$INST_VERS" = "0" ]; then
@@ -281,10 +282,11 @@ cleanup() {
   local funcstack="${5:-}"
   ejectAll
   if [[ "$err" -ne "0" ]]; then
-    error "line $line - command '$command' exited with status: $err."
-    error "In $funcstack called at line $linecallfunc."
+    debug "line $line - command '$command' exited with status: $err."
+    debug "In $funcstack called at line $linecallfunc."
     debug "From function ${funcstack[0]} (line $linecallfunc)."
-    debug "Look at $FILE_LOG for details (or use Console.app)."
+    error "Look at $FILE_LOG for details (or use Console.app). Press enter in the terminal when done..."
+    read -r
   fi
   if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
     osascript -e 'tell application "ProgressDialog"' -e 'quit' -e 'end tell'

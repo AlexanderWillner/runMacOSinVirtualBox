@@ -66,6 +66,7 @@ release:
 	@cp runMojaveVirtualbox.sh app/RunMojaveVirtualbox.app/Contents/Resources/
 	@cd app; rm -f RunMojaveVirtualbox.app.zip || true
 	@cd app; zip -r RunMojaveVirtualbox.app.zip RunMojaveVirtualbox.app/
+	@open app
 	@open https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases
 
 .PHONY: image clean feedback test harden style check release
