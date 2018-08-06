@@ -87,6 +87,9 @@ log() {
 runChecks() {
   info "Running checks (around 1 second)..." 0
   result "."
+  if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
+    open "$SCRIPTPATH/ProgressDialog.app"
+  fi
   if [ "$INST_VERS" = "0" ]; then
     open 'https://beta.apple.com/sp/betaprogram/redemption#macos'
     error "No macOS installer found. Opening the web page for you (press enter in the terminal when done)..."
