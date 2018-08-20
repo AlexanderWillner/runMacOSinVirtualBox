@@ -205,13 +205,12 @@ createClover() {
   if [ ! -e "$DST_CLOVER.iso" ]; then
     result "."
     extractAPFS
-    while [ ! -f "clover.tar.lzma" ]; do
+    while [ ! -f "Clover-v2.4k-4533-X64.iso" ]; do
       info " - Downloading Clover (needs Internet access)..." 80
       curl -Lk https://sourceforge.net/projects/cloverefiboot/files/Bootable_ISO/CloverISO-4533.tar.lzma/download -o clover.tar.lzma
+      xz -d clover.tar.lzma && tar xf clover.tar
       sleep 1
     done
-    xz -d clover.tar.lzma
-    tar xf clover.tar
     hdiutil detach /Volumes/Clover-v2.4k-4533-X64/ 2>/dev/null || true
     hdiutil attach Clover-v2.4k-4533-X64.iso
     hdiutil create -megabytes 16 -fs MS-DOS -volname MojaveClover -o "$DST_CLOVER.dmg"
@@ -281,7 +280,7 @@ cleanup() {
   local command="${4:-}"
   local funcstack="${5:-}"
   ejectAll
-  if [[ "$err" -ne "0" ]]; then
+  if [[ $err -ne "0" ]]; then
     debug "line $line - command '$command' exited with status: $err."
     debug "In $funcstack called at line $linecallfunc."
     debug "From function ${funcstack[0]} (line $linecallfunc)."
@@ -313,5 +312,5 @@ main() {
 ###############################################################################
 
 # Run script ##################################################################
-[[ "${BASH_SOURCE[0]}" == "${0}" ]] && trap 'cleanup "${?}" "${LINENO}" "${BASH_LINENO}" "${BASH_COMMAND}" $(printf "::%s" ${FUNCNAME[@]:-})' EXIT && main "${@:-}"
+[[ ${BASH_SOURCE[0]} == "${0}" ]] && trap 'cleanup "${?}" "${LINENO}" "${BASH_LINENO}" "${BASH_COMMAND}" $(printf "::%s" ${FUNCNAME[@]:-})' EXIT && main "${@:-}"
 ###############################################################################
