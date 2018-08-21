@@ -20,7 +20,7 @@ readonly SCRIPTPATH="$(
 readonly INST_VERS="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' | wc -l | tr -d '[:space:]')"
 readonly INST_VER="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' -print -quit)"
 readonly INST_BIN="$INST_VER/Contents/Resources/createinstallmedia"
-readonly DST_DIR="/tmp"
+readonly DST_DIR="$HOME/VirtualBox VMs/"
 readonly VM="macOS-Mojave"
 readonly VM_DIR="$HOME/VirtualBox VMs/$VM"
 readonly VM_SIZE="32768"
@@ -32,7 +32,7 @@ readonly DST_DMG="$DST_DIR/$VM.dmg"
 readonly DST_CLOVER="$DST_DIR/${VM}Clover"
 readonly DST_VOL="/Volumes/$VM"
 readonly DST_ISO="$DST_DIR/$VM.iso.cdr"
-readonly FILE_EFI="$DST_DIR/apfs.efi"
+readonly FILE_EFI="/tmp/apfs.efi"
 readonly FILE_CFG="$SCRIPTPATH/config.plist"
 readonly FILE_LOG="$HOME/Library/Logs/runMojaveVirtualbox.log"
 ###############################################################################
@@ -171,6 +171,7 @@ createImage() {
   if [ ! -e "$DST_DMG" ]; then
     result "."
     ejectAll
+    mkdir -p "$DST_DIR"
     hdiutil create -o "$DST_DMG" -size 10g -layout SPUD -fs HFS+J &&
       hdiutil attach "$DST_DMG" -mountpoint "$DST_VOL" &&
       sudo "$INST_BIN" --nointeraction --volume "$DST_VOL" --applicationpath "$INST_VER"
@@ -181,6 +182,7 @@ createImage() {
   info "Creating iso '$DST_ISO' (around 25 seconds)..." 40
   if [ ! -e "$DST_ISO" ]; then
     result "."
+    mkdir -p "$DST_DIR"
     hdiutil convert "$DST_DMG" -format UDTO -o "$DST_ISO"
   else
     result "already exists."
@@ -204,6 +206,7 @@ createClover() {
   info "Creating clover image '$DST_CLOVER.iso' (around 30 seconds)..."
   if [ ! -e "$DST_CLOVER.iso" ]; then
     result "."
+    mkdir -p "$DST_DIR"
     extractAPFS
     while [ ! -f "Clover-v2.4k-4533-X64.iso" ]; do
       info " - Downloading Clover (needs Internet access)..." 80
@@ -222,6 +225,7 @@ createClover() {
     hdiutil detach /Volumes/Clover-v2.4k-4533-X64/
     hdiutil detach /Volumes/NO\ NAME/
     hdiutil makehybrid -iso -joliet -o "$DST_CLOVER.iso" "$DST_CLOVER.dmg"
+    rm "$DST_CLOVER.dmg" "$DST_CLOVER.dmg"
   else
     result "already exists."
   fi
