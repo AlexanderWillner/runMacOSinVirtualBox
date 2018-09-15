@@ -31,8 +31,16 @@ Download the app [```RunMojaveVirtualbox.app```](https://github.com/AlexanderWil
 6. Start macOS in the Clover boot menu (the initial installation might take some time):
 ![Clover](img/clover.png)
 ![Install](img/install2.png)
-7. Enjoy macOS Mojave in Virtualbox:
+7. Enjoy macOS in Virtualbox:
 ![Running macOS 10.14 Mojave Beta 1 in VirtualBox 5.2](img/macosMojaveBeta1.png)
+8. (optional) Remove the need to mount the Clover ISO file ( thanks to Issue #13 ):
+```
+# Run this within the virtual machine and remove the ISO from the setup afterwards
+sudo mkdir /Volumes/EFI
+sudo mount -t msdos /dev/disk0s1 /Volumes/EFI
+sudo cp -r /Volumes/NO\ NAME/EFI/* /Volumes/EFI/EFI
+sudo diskutil unmount /dev/disk0s1
+```
 
 ## Shell Hacker
 Execute ```make all``` to setup and run everything:
