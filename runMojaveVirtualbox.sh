@@ -34,6 +34,7 @@ readonly DST_VOL="/Volumes/$VM"
 readonly DST_ISO="$DST_DIR/$VM.iso.cdr"
 readonly FILE_EFI="/tmp/apfs.efi"
 readonly FILE_CFG="$SCRIPTPATH/config.plist"
+readonly FILE_EFIMOVER="$SCRIPTPATH/moveCloverToEFI.sh"
 readonly FILE_LOG="$HOME/Library/Logs/runMojaveVirtualbox.log"
 ###############################################################################
 
@@ -222,6 +223,7 @@ createClover() {
     cp -r /Volumes/Clover-v2.4k-4533-X64/* /Volumes/NO\ NAME/
     cp "$FILE_CFG" /Volumes/NO\ NAME/EFI/CLOVER/
     cp "$FILE_EFI" /Volumes/NO\ NAME/EFI/CLOVER/drivers64UEFI/
+    cp "$FILE_EFIMOVER" /Volumes/NO\ NAME/
     hdiutil detach /Volumes/Clover-v2.4k-4533-X64/
     hdiutil detach /Volumes/NO\ NAME/
     hdiutil makehybrid -iso -joliet -o "$DST_CLOVER.iso" "$DST_CLOVER.dmg"
