@@ -225,7 +225,7 @@ createClover() {
     hdiutil detach /Volumes/Clover-v2.4k-4533-X64/
     hdiutil detach /Volumes/NO\ NAME/
     hdiutil makehybrid -iso -joliet -o "$DST_CLOVER.iso" "$DST_CLOVER.dmg"
-    rm "$DST_CLOVER.dmg" "$DST_CLOVER.dmg"
+    rm -f "$DST_CLOVER.dmg" "$DST_CLOVER.dmg"
   else
     result "already exists."
   fi
