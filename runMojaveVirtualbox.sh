@@ -125,6 +125,7 @@ runChecks() {
     error "'xz' not installed. Trying to install automatically, if you've brew installed..."
     if type brew >/dev/null 2>&1; then
       brew install xz || exit 3
+      brew link xz || exit 3
     else
       exit 3
     fi
