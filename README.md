@@ -87,6 +87,9 @@ Some available commands:
 * Kernel Panic
   * Q: I see the message ```Error loading kernel cache (0x9)```. What should I do?
   * A: This error is shown from time to time. Restart the VM.
+* Black Screen
+  * Q: When I then boot I don't get the Clover boot menu, just a black screen. What should I do?
+  * A: Change the VM version in the settings from ```Mac OS X (64-bit)``` to ```macOS 10.13 High Sierra (64-bit)```
 * Other Issue
   * Q: Something is not working. What should I do?
   * A: [Create a ticket](https://github.com/AlexanderWillner/runMacOSinVirtualBox/issues/new?template=bug_report.md)
