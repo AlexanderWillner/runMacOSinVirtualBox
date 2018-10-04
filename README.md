@@ -1,8 +1,8 @@
-# Run macOS 10.14 Mojave (and other versions) on VirtualBox on macOS
+# Run macOS 10.14 Mojave (and other versions) in VirtualBox on macOS
 
 ## Overview
 
-Simple script to automatically download, install and run macOS 10.14 Mojave (and other versions) on VirtualBox on macOS. Since VirtualBox 5.2 does not support booting from APFS volumes, this script is using the [Clover EFI bootloader](https://sourceforge.net/projects/cloverefiboot/) as a workaround.
+Simple script to automatically download, install and run macOS 10.14 Mojave (and other versions) in VirtualBox on macOS. Since VirtualBox 5.2 does not support booting from APFS volumes, this script is using the [Clover EFI bootloader](https://sourceforge.net/projects/cloverefiboot/) as a workaround.
 
 ## ToC
 
@@ -19,7 +19,7 @@ Download the app [```RunMojaveVirtualbox.app```](https://github.com/AlexanderWil
  
 ## Step by Step Guide
 
-1. [Download macOS Mojave Beta](https://beta.apple.com/sp/betaprogram/redemption#macos) first (the download page will be opened otherwise automatically)
+1. Download macOS ([stable](https://itunes.apple.com/us/app/macos-mojave/id1398502828?mt=12) / [beta](https://beta.apple.com/sp/betaprogram/redemption#macos)) first
 2. Around 2 minutes after executing this script/app you should have a configured and running VM:
 ![Images](img/images.png)
 3. After booting erase the virtual drive ```VBOX HARDDISK Media``` in Disk Utility using APFS and name it 'Mojave':
@@ -87,6 +87,9 @@ Some available commands:
 * Kernel Panic
   * Q: I see the message ```Error loading kernel cache (0x9)```. What should I do?
   * A: This error is shown from time to time. Restart the VM.
+* Black Screen
+  * Q: When I then boot I don't get the Clover boot menu, just a black screen. What should I do?
+  * A: Change the VM version in the settings from ```Mac OS X (64-bit)``` to ```macOS 10.13 High Sierra (64-bit)```
 * Other Issue
   * Q: Something is not working. What should I do?
   * A: [Create a ticket](https://github.com/AlexanderWillner/runMacOSinVirtualBox/issues/new?template=bug_report.md)
