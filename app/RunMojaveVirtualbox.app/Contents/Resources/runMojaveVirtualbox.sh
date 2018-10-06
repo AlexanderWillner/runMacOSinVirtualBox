@@ -20,7 +20,7 @@ readonly SCRIPTPATH="$(
 readonly INST_VERS="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' | wc -l | tr -d '[:space:]')"
 readonly INST_VER="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' -print -quit)"
 readonly INST_BIN="$INST_VER/Contents/Resources/createinstallmedia"
-readonly DST_DIR="$HOME/VirtualBox VMs/"
+readonly DST_DIR="/tmp"
 readonly VM="macOS-Mojave"
 readonly VM_DIR="$HOME/VirtualBox VMs/$VM"
 readonly VM_SIZE="32768"
@@ -32,9 +32,8 @@ readonly DST_DMG="$DST_DIR/$VM.dmg"
 readonly DST_CLOVER="$DST_DIR/${VM}Clover"
 readonly DST_VOL="/Volumes/$VM"
 readonly DST_ISO="$DST_DIR/$VM.iso.cdr"
-readonly FILE_EFI="/tmp/apfs.efi"
+readonly FILE_EFI="$DST_DIR/apfs.efi"
 readonly FILE_CFG="$SCRIPTPATH/config.plist"
-readonly FILE_EFIMOVER="$SCRIPTPATH/moveCloverToEFI.sh"
 readonly FILE_LOG="$HOME/Library/Logs/runMojaveVirtualbox.log"
 ###############################################################################
 
@@ -125,7 +124,6 @@ runChecks() {
     error "'xz' not installed. Trying to install automatically, if you've brew installed..."
     if type brew >/dev/null 2>&1; then
       brew install xz || exit 3
-      brew link xz || exit 3
     else
       exit 3
     fi
@@ -173,7 +171,6 @@ createImage() {
   if [ ! -e "$DST_DMG" ]; then
     result "."
     ejectAll
-    mkdir -p "$DST_DIR"
     hdiutil create -o "$DST_DMG" -size 10g -layout SPUD -fs HFS+J &&
       hdiutil attach "$DST_DMG" -mountpoint "$DST_VOL" &&
       sudo "$INST_BIN" --nointeraction --volume "$DST_VOL" --applicationpath "$INST_VER"
@@ -184,7 +181,6 @@ createImage() {
   info "Creating iso '$DST_ISO' (around 25 seconds)..." 40
   if [ ! -e "$DST_ISO" ]; then
     result "."
-    mkdir -p "$DST_DIR"
     hdiutil convert "$DST_DMG" -format UDTO -o "$DST_ISO"
   else
     result "already exists."
@@ -208,14 +204,14 @@ createClover() {
   info "Creating clover image '$DST_CLOVER.iso' (around 30 seconds)..."
   if [ ! -e "$DST_CLOVER.iso" ]; then
     result "."
-    mkdir -p "$DST_DIR"
     extractAPFS
-    while [ ! -f "Clover-v2.4k-4533-X64.iso" ]; do
+    while [ ! -f "clover.tar.lzma" ]; do
       info " - Downloading Clover (needs Internet access)..." 80
       curl -Lk https://sourceforge.net/projects/cloverefiboot/files/Bootable_ISO/CloverISO-4533.tar.lzma/download -o clover.tar.lzma
-      xz -d clover.tar.lzma && tar xf clover.tar
       sleep 1
     done
+    xz -d clover.tar.lzma
+    tar xf clover.tar
     hdiutil detach /Volumes/Clover-v2.4k-4533-X64/ 2>/dev/null || true
     hdiutil attach Clover-v2.4k-4533-X64.iso
     hdiutil create -megabytes 16 -fs MS-DOS -volname MojaveClover -o "$DST_CLOVER.dmg"
@@ -224,11 +220,9 @@ createClover() {
     cp -r /Volumes/Clover-v2.4k-4533-X64/* /Volumes/NO\ NAME/
     cp "$FILE_CFG" /Volumes/NO\ NAME/EFI/CLOVER/
     cp "$FILE_EFI" /Volumes/NO\ NAME/EFI/CLOVER/drivers64UEFI/
-    cp "$FILE_EFIMOVER" /Volumes/NO\ NAME/
     hdiutil detach /Volumes/Clover-v2.4k-4533-X64/
     hdiutil detach /Volumes/NO\ NAME/
     hdiutil makehybrid -iso -joliet -o "$DST_CLOVER.iso" "$DST_CLOVER.dmg"
-    rm -f "$DST_CLOVER.dmg" "$DST_CLOVER.dmg"
   else
     result "already exists."
   fi
@@ -287,7 +281,7 @@ cleanup() {
   local command="${4:-}"
   local funcstack="${5:-}"
   ejectAll
-  if [[ $err -ne "0" ]]; then
+  if [[ "$err" -ne "0" ]]; then
     debug "line $line - command '$command' exited with status: $err."
     debug "In $funcstack called at line $linecallfunc."
     debug "From function ${funcstack[0]} (line $linecallfunc)."
@@ -319,5 +313,5 @@ main() {
 ###############################################################################
 
 # Run script ##################################################################
-[[ ${BASH_SOURCE[0]} == "${0}" ]] && trap 'cleanup "${?}" "${LINENO}" "${BASH_LINENO}" "${BASH_COMMAND}" $(printf "::%s" ${FUNCNAME[@]:-})' EXIT && main "${@:-}"
+[[ "${BASH_SOURCE[0]}" == "${0}" ]] && trap 'cleanup "${?}" "${LINENO}" "${BASH_LINENO}" "${BASH_COMMAND}" $(printf "::%s" ${FUNCNAME[@]:-})' EXIT && main "${@:-}"
 ###############################################################################
