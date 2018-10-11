@@ -79,8 +79,8 @@ Some available commands:
 ## FAQ
 
 * Error Message
-  * Q: I
-  * A: 
+  * Q: I get the error code 2, 3, 4, or 6.
+  * A: You need to have some software components installed on your machine (VirtualBox, VirtualBox Extension Pack, xz, awk). If you've installed http://brew.sh, the script will install these automatically. Otherwise, you need to install them manually.
 * Reboot
   * Q: I see the message ```MACH Reboot```. What should I do?
   * A: The VM failed to restart. Restart manually.
