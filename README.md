@@ -19,7 +19,7 @@ Download the app [```RunMojaveVirtualbox.app```](https://github.com/AlexanderWil
  
 ## Step by Step Guide
 
-1. Download macOS ([stable](https://itunes.apple.com/us/app/macos-mojave/id1398502828?mt=12) / [beta](https://beta.apple.com/sp/betaprogram/redemption#macos)) first
+1. Download macOS ([stable](https://itunes.apple.com/us/app/macos-mojave/id1398502828?mt=12) / [beta](https://beta.apple.com/sp/betaprogram/redemption#macos)) first. Note that you need to use a Mac to do so.
 2. Around 2 minutes after executing this script/app you should have a configured and running VM:
 ![Images](img/images.png)
 3. After booting erase the virtual drive ```VBOX HARDDISK Media``` in Disk Utility using APFS and name it 'Mojave':
@@ -78,6 +78,9 @@ Some available commands:
 
 ## FAQ
 
+* Error Message
+  * Q: I
+  * A: 
 * Reboot
   * Q: I see the message ```MACH Reboot```. What should I do?
   * A: The VM failed to restart. Restart manually.
