@@ -37,6 +37,7 @@ Download the app [```RunMojaveVirtualbox.app```](https://github.com/AlexanderWil
 ```sh /Volumes/NO\ NAME/moveCloverToEFI.sh```
 
 ## Shell Hacker
+
 Execute ```make all``` to setup and run everything:
 
 ```
@@ -56,6 +57,21 @@ real	1m21.689s
 user	0m19.641s
 sys	0m14.779s
 ```
+
+### Customizing your build
+
+Additionally the following parameters can be customized with environment variables:
+
+| variable name | description                                         | default value                |
+|---------------|-----------------------------------------------------|------------------------------|
+| VM_NAME       | name of the virtual machine                         |  macOS-Mojave                |
+| VM_DIR        | directory, where the virtual machine will be stored | HOME/VirtualBox VMs/$VM_NAME |
+| VM_SIZE       | the size of the hard disk                           | 32768                        |
+| VM_RES        | monitor resolution                                  | 1680x1050                    |
+| VM_RAM        | ram size in megabytes                               | 4096                         |
+| VM_VRAM       | video ram size in megabytes                         | 128                          |
+| VM_CPU        | number of cpu cores to allocate                     | 2                            |
+
 
 Execute ```make``` to get some help:
 
@@ -96,4 +112,3 @@ Some available commands:
 * Other Issue
   * Q: Something is not working. What should I do?
   * A: [Create a ticket](https://github.com/AlexanderWillner/runMacOSinVirtualBox/issues/new?template=bug_report.md)
-  
