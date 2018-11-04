@@ -20,20 +20,21 @@ readonly SCRIPTPATH="$(
 readonly INST_VERS="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' | wc -l | tr -d '[:space:]')"
 readonly INST_VER="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' -print -quit)"
 readonly INST_BIN="$INST_VER/Contents/Resources/createinstallmedia"
-readonly DST_DIR="/tmp"
-readonly VM="macOS-Mojave"
-readonly VM_DIR="$HOME/VirtualBox VMs/$VM"
-readonly VM_SIZE="32768"
-readonly VM_RES="1680x1050"
-readonly VM_RAM="4096"
-readonly VM_VRAM="128"
-readonly VM_CPU="2"
-readonly DST_DMG="$DST_DIR/$VM.dmg"
-readonly DST_CLOVER="$DST_DIR/${VM}Clover"
-readonly DST_VOL="/Volumes/$VM"
-readonly DST_ISO="$DST_DIR/$VM.iso.cdr"
-readonly FILE_EFI="$DST_DIR/apfs.efi"
+readonly DST_DIR="${DST_DIR:-$HOME/VirtualBox VMs}"
+readonly VM_NAME="${VM_NAME:-macOS-Mojave}"
+readonly VM_DIR="${VM_DIR:-$DST_DIR/$VM_NAME}"
+readonly VM_SIZE="${VM_SIZE:-32768}"
+readonly VM_RES="${VM_RES:-1680x1050}"
+readonly VM_RAM="${VM_RAM:-4096}"
+readonly VM_VRAM="${VM_VRAM:-128}"
+readonly VM_CPU="${VM_CPU:-2}"
+readonly DST_DMG="$DST_DIR/$VM_NAME.dmg"
+readonly DST_CLOVER="$DST_DIR/${VM_NAME}Clover"
+readonly DST_VOL="/Volumes/$VM_NAME"
+readonly DST_ISO="$DST_DIR/$VM_NAME.iso.cdr"
+readonly FILE_EFI="/tmp/apfs.efi"
 readonly FILE_CFG="$SCRIPTPATH/config.plist"
+readonly FILE_EFIMOVER="$SCRIPTPATH/moveCloverToEFI.sh"
 readonly FILE_LOG="$HOME/Library/Logs/runMojaveVirtualbox.log"
 ###############################################################################
 
@@ -114,7 +115,7 @@ runChecks() {
   fi
   if ! type VBoxManage >/dev/null 2>&1; then
     error "'VBoxManage' not installed. Trying to install automatically, if you've brew installed..."
-    if ! type brew >/dev/null 2>&1; then
+    if type brew >/dev/null 2>&1; then
       brew cask install virtualbox || exit 2
     else
       exit 2
@@ -124,6 +125,7 @@ runChecks() {
     error "'xz' not installed. Trying to install automatically, if you've brew installed..."
     if type brew >/dev/null 2>&1; then
       brew install xz || exit 3
+      brew link xz || exit 3
     else
       exit 3
     fi
@@ -171,8 +173,10 @@ createImage() {
   if [ ! -e "$DST_DMG" ]; then
     result "."
     ejectAll
+    mkdir -p "$DST_DIR"
     hdiutil create -o "$DST_DMG" -size 10g -layout SPUD -fs HFS+J &&
       hdiutil attach "$DST_DMG" -mountpoint "$DST_VOL" &&
+      echo sudo "$INST_BIN" --nointeraction --volume "$DST_VOL" --applicationpath "$INST_VER"
       sudo "$INST_BIN" --nointeraction --volume "$DST_VOL" --applicationpath "$INST_VER"
     ejectAll
   else
@@ -181,6 +185,7 @@ createImage() {
   info "Creating iso '$DST_ISO' (around 25 seconds)..." 40
   if [ ! -e "$DST_ISO" ]; then
     result "."
+    mkdir -p "$DST_DIR"
     hdiutil convert "$DST_DMG" -format UDTO -o "$DST_ISO"
   else
     result "already exists."
@@ -204,14 +209,14 @@ createClover() {
   info "Creating clover image '$DST_CLOVER.iso' (around 30 seconds)..."
   if [ ! -e "$DST_CLOVER.iso" ]; then
     result "."
+    mkdir -p "$DST_DIR"
     extractAPFS
-    while [ ! -f "clover.tar.lzma" ]; do
+    while [ ! -f "Clover-v2.4k-4533-X64.iso" ]; do
       info " - Downloading Clover (needs Internet access)..." 80
       curl -Lk https://sourceforge.net/projects/cloverefiboot/files/Bootable_ISO/CloverISO-4533.tar.lzma/download -o clover.tar.lzma
+      xz -d clover.tar.lzma && tar xf clover.tar
       sleep 1
     done
-    xz -d clover.tar.lzma
-    tar xf clover.tar
     hdiutil detach /Volumes/Clover-v2.4k-4533-X64/ 2>/dev/null || true
     hdiutil attach Clover-v2.4k-4533-X64.iso
     hdiutil create -megabytes 16 -fs MS-DOS -volname MojaveClover -o "$DST_CLOVER.dmg"
@@ -220,9 +225,11 @@ createClover() {
     cp -r /Volumes/Clover-v2.4k-4533-X64/* /Volumes/NO\ NAME/
     cp "$FILE_CFG" /Volumes/NO\ NAME/EFI/CLOVER/
     cp "$FILE_EFI" /Volumes/NO\ NAME/EFI/CLOVER/drivers64UEFI/
+    cp "$FILE_EFIMOVER" /Volumes/NO\ NAME/
     hdiutil detach /Volumes/Clover-v2.4k-4533-X64/
     hdiutil detach /Volumes/NO\ NAME/
     hdiutil makehybrid -iso -joliet -o "$DST_CLOVER.iso" "$DST_CLOVER.dmg"
+    rm -f "$DST_CLOVER.dmg" "$DST_CLOVER.dmg"
   else
     result "already exists."
   fi
@@ -232,34 +239,34 @@ createVM() {
   if [ ! -e "$VM_DIR" ]; then
     mkdir -p "$VM_DIR"
   fi
-  info "Creating VM HDD '$VM_DIR/$VM.vdi' (around 5 seconds)..." 90
-  if [ ! -e "$VM_DIR/$VM.vdi" ]; then
+  info "Creating VM HDD '$VM_DIR/$VM_NAME.vdi' (around 5 seconds)..." 90
+  if [ ! -e "$VM_DIR/$VM_NAME.vdi" ]; then
     result "."
-    VBoxManage createhd --filename "$VM_DIR/$VM.vdi" --variant Standard --size "$VM_SIZE"
+    VBoxManage createhd --filename "$VM_DIR/$VM_NAME.vdi" --variant Standard --size "$VM_SIZE"
   else
     result "already exists."
   fi
-  info "Creating VM '$VM' (around 2 seconds)..." 99
-  if ! VBoxManage showvminfo "$VM" >/dev/null 2>&1; then
+  info "Creating VM '$VM_NAME' (around 2 seconds)..." 99
+  if ! VBoxManage showvminfo "$VM_NAME" >/dev/null 2>&1; then
     result "."
-    VBoxManage createvm --register --name "$VM" --ostype MacOS1013_64
-    VBoxManage modifyvm "$VM" --usbxhci on --memory "$VM_RAM" --vram "$VM_VRAM" --cpus "$VM_CPU" --firmware efi --chipset ich9 --mouse usbtablet --keyboard usb
-    VBoxManage setextradata "$VM" "CustomVideoMode1" "${VM_RES}x32"
-    VBoxManage setextradata "$VM" VBoxInternal2/EfiGraphicsResolution "$VM_RES"
-    VBoxManage storagectl "$VM" --name "SATA Controller" --add sata --controller IntelAHCI --hostiocache on
-    VBoxManage storageattach "$VM" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$VM_DIR/$VM.vdi"
-    VBoxManage storageattach "$VM" --storagectl "SATA Controller" --port 1 --device 0 --type dvddrive --medium "$DST_CLOVER.iso"
-    VBoxManage storageattach "$VM" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --medium "$DST_ISO"
+    VBoxManage createvm --register --name "$VM_NAME" --ostype MacOS1013_64
+    VBoxManage modifyvm "$VM_NAME" --usbxhci on --memory "$VM_RAM" --vram "$VM_VRAM" --cpus "$VM_CPU" --firmware efi --chipset ich9 --mouse usbtablet --keyboard usb
+    VBoxManage setextradata "$VM_NAME" "CustomVideoMode1" "${VM_RES}x32"
+    VBoxManage setextradata "$VM_NAME" VBoxInternal2/EfiGraphicsResolution "$VM_RES"
+    VBoxManage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAHCI --hostiocache on
+    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$VM_DIR/$VM_NAME.vdi"
+    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type dvddrive --medium "$DST_CLOVER.iso"
+    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --medium "$DST_ISO"
   else
     result "already exists."
   fi
 }
 
 runVM() {
-  info "Starting VM '$VM' (3 minutes in the VM)..." 100
+  info "Starting VM '$VM_NAME' (3 minutes in the VM)..." 100
   if ! VBoxManage showvminfo 'macOS-Mojave' | grep "State:" | grep -i running >/dev/null; then
     result "."
-    VBoxManage startvm "$VM" --type gui
+    VBoxManage startvm "$VM_NAME" --type gui
     echo "Next steps:"
     echo "  1. Disk Utility: erase the virtual drive using APFS and call it 'Mojave' (it will be converted otherwise)"
     echo "  2. Install macOS: on the erased virtual drive 'Mojave' (around 4 minutes)"
@@ -281,7 +288,7 @@ cleanup() {
   local command="${4:-}"
   local funcstack="${5:-}"
   ejectAll
-  if [[ "$err" -ne "0" ]]; then
+  if [[ $err -ne "0" ]]; then
     debug "line $line - command '$command' exited with status: $err."
     debug "In $funcstack called at line $linecallfunc."
     debug "From function ${funcstack[0]} (line $linecallfunc)."
@@ -300,7 +307,7 @@ main() {
     case "$ARG" in
     check) runChecks ;;
     clean) runClean ;;
-    stash) VBoxManage unregistervm --delete "$VM" || true ;;
+    stash) VBoxManage unregistervm --delete "$VM_NAME" || true ;;
     installer) createImage ;;
     clover) createClover ;;
     vm) createVM ;;
@@ -313,5 +320,5 @@ main() {
 ###############################################################################
 
 # Run script ##################################################################
-[[ "${BASH_SOURCE[0]}" == "${0}" ]] && trap 'cleanup "${?}" "${LINENO}" "${BASH_LINENO}" "${BASH_COMMAND}" $(printf "::%s" ${FUNCNAME[@]:-})' EXIT && main "${@:-}"
+[[ ${BASH_SOURCE[0]} == "${0}" ]] && trap 'cleanup "${?}" "${LINENO}" "${BASH_LINENO}" "${BASH_COMMAND}" $(printf "::%s" ${FUNCNAME[@]:-})' EXIT && main "${@:-}"
 ###############################################################################
