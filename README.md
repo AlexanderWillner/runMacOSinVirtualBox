@@ -36,7 +36,7 @@ Download the app [```RunMojaveVirtualbox.app```](https://github.com/AlexanderWil
 7. Enjoy macOS in Virtualbox:
 ![Running macOS 10.14 Mojave Beta 1 in VirtualBox 5.2](img/macosMojaveBeta1.png)
 8. (optional) Remove the need to mount the Clover ISO file ( thanks to Issue #13 ) by running this command in a Terminal window within the virtual machine and remove the ISO from the setup afterwards:
-```sh /Volumes/NO\ NAME/moveCloverToEFI.sh```
+```sudo sh /Volumes/NO\ NAME/moveCloverToEFI.sh```
 
 ## Shell Hacker
 
