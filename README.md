@@ -23,7 +23,7 @@ Download the app [```RunMojaveVirtualbox.app```](https://github.com/AlexanderWil
  
 Four minute summary video:
 
-[![Short Summary Video](https://img.youtube.com/vi/ik9kAR9deE0/0.jpg)](https://youtu.be/ik9kAR9deE0)
+[![Short Summary Video](https://img.youtube.com/vi/Sr2_v_OtxIY/0.jpg)](https://youtu.be/Sr2_v_OtxIY)
  
 ## Step by Step Guide
 
