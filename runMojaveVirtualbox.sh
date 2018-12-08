@@ -140,12 +140,9 @@ runChecks() {
     fi
   fi
   if [ "$(VBoxManage list extpacks | grep 'USB 3.0')" = "" ]; then
-    error "VirtualBox USB 3.0 Extension Pack not installed. Trying to install automatically, if you've brew installed..."
-    if type brew >/dev/null 2>&1; then
-      brew cask install virtualbox-extension-pack || exit 4
-    else
-      exit 4
-    fi
+    error "VirtualBox USB 3.0 Extension Pack not installed. Will not install it automatically, due to licensing issues!"
+    # brew cask install virtualbox-extension-pack || exit 4
+    exit 4
   fi
   if [ ! -f "$FILE_CFG" ]; then
     error "'$FILE_CFG' not found. Not checked out? (press enter in the terminal when done)..."
