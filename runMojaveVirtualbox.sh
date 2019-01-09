@@ -32,7 +32,7 @@ readonly DST_DMG="$DST_DIR/$VM_NAME.dmg"
 readonly DST_CLOVER="$DST_DIR/${VM_NAME}Clover"
 readonly DST_VOL="/Volumes/$VM_NAME"
 readonly DST_ISO="$DST_DIR/$VM_NAME.iso.cdr"
-readonly FILE_EFI="/tmp/apfs.efi"
+readonly FILE_EFI="/usr/standalone/i386/apfs.efi"
 readonly FILE_CFG="$SCRIPTPATH/config.plist"
 readonly FILE_EFIMOVER="$SCRIPTPATH/moveCloverToEFI.sh"
 readonly FILE_LOG="$HOME/Library/Logs/runMojaveVirtualbox.log"
@@ -141,7 +141,7 @@ runChecks() {
   fi
   if [ "$(VBoxManage list extpacks | grep 'USB 3.0')" = "" ]; then
     error "VirtualBox USB 3.0 Extension Pack not installed. Will not install it automatically, due to licensing issues!"
-    # brew cask install virtualbox-extension-pack || exit 4
+    error "Install e.g. via brew cask install virtualbox-extension-pack"
     exit 4
   fi
   if [ ! -f "$FILE_CFG" ]; then
@@ -162,6 +162,8 @@ ejectAll() {
     hdiutil detach "$i" 2>/dev/null || true
   done
   hdiutil detach "$DST_VOL" 2>/dev/null || true
+  find /Volumes/ -maxdepth 1 -name "NO NAME*" -exec hdiutil detach {} \; 2>/dev/null || true
+  find /Volumes/ -maxdepth 1 -name "Clover-v2.4k-4533-X64*" -exec hdiutil detach {} \; 2>/dev/null || true
 }
 
 createImage() {
@@ -189,35 +191,20 @@ createImage() {
   fi
 }
 
-extractAPFS() {
-  info " - Extracting APFS EFI driver (around 10 seconds)..." 60
-  if [ ! -e "$FILE_EFI" ]; then
-    result "."
-    ejectAll
-    hdiutil attach "$INST_VER/Contents/SharedSupport/BaseSystem.dmg" &&
-      cp /Volumes/OS\ X\ Base\ System/usr/standalone/i386/apfs.efi "$FILE_EFI"
-    ejectAll
-  else
-    result "already exists."
-  fi
-}
-
 createClover() {
   info "Creating clover image '$DST_CLOVER.iso' (around 30 seconds)..."
+  ejectAll
   if [ ! -e "$DST_CLOVER.iso" ]; then
     result "."
     mkdir -p "$DST_DIR"
-    extractAPFS
     while [ ! -f "Clover-v2.4k-4533-X64.iso" ]; do
       info " - Downloading Clover (needs Internet access)..." 80
       curl -Lk https://sourceforge.net/projects/cloverefiboot/files/Bootable_ISO/CloverISO-4533.tar.lzma/download -o clover.tar.lzma
-      xz -d clover.tar.lzma && tar xf clover.tar
+      xz -d clover.tar.lzma && tar xmf clover.tar
       sleep 1
     done
-    hdiutil detach /Volumes/Clover-v2.4k-4533-X64/ 2>/dev/null || true
     hdiutil attach Clover-v2.4k-4533-X64.iso
     hdiutil create -megabytes 16 -fs MS-DOS -volname MojaveClover -o "$DST_CLOVER.dmg"
-    hdiutil detach /Volumes/NO\ NAME/ 2>/dev/null || true
     hdiutil attach "$DST_CLOVER.dmg"
     cp -r /Volumes/Clover-v2.4k-4533-X64/* /Volumes/NO\ NAME/
     cp "$FILE_CFG" /Volumes/NO\ NAME/EFI/CLOVER/
