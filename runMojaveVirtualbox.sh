@@ -246,6 +246,7 @@ unClover() {
   fi
   
   # Drivers from TheTechBlogger
+  # Todo: get the drivers automatically from https://github.com/acidanthera/AppleSupportPkg
   mkdir /Volumes/EFI/EFI/drivers >/dev/null 2>&1 || true
   cp TheTechBlogger/EFI/drivers/* /Volumes/EFI/EFI/drivers/
   
