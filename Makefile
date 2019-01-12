@@ -7,6 +7,7 @@ help:
 	@echo " * check    : check environment"
 	@echo " * installer: create macOS installer image"
 	@echo " * clover   : create clover boot image"
+	@echo " * unclover : add APFS drivers to VM EFI to boot w/o clover"
 	@echo " * vm       : create VM and disk"
 	@echo " * run      : run VM"
 	@echo " * clean    : delete generated images and downloaded files"
@@ -29,6 +30,9 @@ installer:
 
 clover:
 	@bash  $(SCRIPT) clover
+
+unclover:
+	@bash  $(SCRIPT) unclover
 
 vm:
 	@bash  $(SCRIPT) vm

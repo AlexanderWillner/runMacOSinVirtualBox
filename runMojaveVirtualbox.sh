@@ -162,6 +162,7 @@ ejectAll() {
     hdiutil detach "$i" 2>/dev/null || true
   done
   hdiutil detach "$DST_VOL" 2>/dev/null || true
+  hdiutil detach /Volumes/EFI 2>/dev/null || true
   find /Volumes/ -maxdepth 1 -name "NO NAME*" -exec hdiutil detach {} \; 2>/dev/null || true
   find /Volumes/ -maxdepth 1 -name "Clover-v2.4k-4533-X64*" -exec hdiutil detach {} \; 2>/dev/null || true
 }
@@ -217,6 +218,48 @@ createClover() {
   else
     result "already exists."
   fi
+}
+
+unClover() {
+  # todo: this is a first draft for #37
+  info "Adding APFS drivers to EFI in '$VM_DIR/$VM_NAME.vdi' (around 2 seconds)..."
+  
+  if ! type vdmutil >/dev/null 2>&1; then
+    error "'vdmutil' not installed. Install it via 'brew cask install paragon-vmdk-mounter'"
+    exit 90
+  fi
+  
+  if [ ! -d "TheTechBlogger" ]; then
+    error "'TheTechBlogger' does not exist. Get it via Google'"
+    exit 91  
+  fi
+    
+  ejectAll
+  
+  # no luck with with qemu-nbd or vdfuse and no r/w with vhdimount
+  EFI_DEVICE=$(vdmutil attach "$VM_DIR/$VM_NAME.vdi"|grep "/dev"|head -n1)
+  diskutil mount "${EFI_DEVICE}s1"
+
+  if [ ! -d "/Volumes/EFI/EFI" ]; then
+    error "'/Volumes/EFI/EFI' does not exist. Something went wrong'"
+    exit 92
+  fi
+  
+  # Drivers from TheTechBlogger
+  mkdir /Volumes/EFI/EFI/drivers >/dev/null 2>&1 || true
+  cp TheTechBlogger/EFI/drivers/* /Volumes/EFI/EFI/drivers/
+  
+  # Create startup script
+  cat <<EOT > /Volumes/EFI/startup.nsh
+load fs0:\EFI\drivers\*
+map -r
+fs1:\System\Library\CoreServices\boot.efi
+fs2:\System\Library\CoreServices\boot.efi
+fs3:\System\Library\CoreServices\boot.efi
+EOT
+  
+  diskutil unmount "${EFI_DEVICE}s1"
+  diskutil eject "${EFI_DEVICE}"
 }
 
 createVM() {
@@ -294,10 +337,11 @@ main() {
     stash) VBoxManage unregistervm --delete "$VM_NAME" || true ;;
     installer) createImage ;;
     clover) createClover ;;
+    unclover) unClover ;;
     vm) createVM ;;
     run) runVM ;;
     all) runChecks && createImage && createClover && createVM && runVM ;;
-    *) echo "Possible commands: clean, stash, all, check, installer, clover, vm, run" >&4 ;;
+    *) echo "Possible commands: clean, stash, all, check, installer, clover, unclover, vm, run" >&4 ;;
     esac
   done
 }
