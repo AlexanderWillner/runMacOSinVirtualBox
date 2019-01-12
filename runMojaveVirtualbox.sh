@@ -220,47 +220,49 @@ createClover() {
   fi
 }
 
-unClover() {
-  # todo: this is a first draft for #37
+patchEFI() {
+  # todo: this is a second draft for #37
   info "Adding APFS drivers to EFI in '$VM_DIR/$VM_NAME.vdi' (around 2 seconds)..."
   
+  if [ ! -f "$VM_DIR/$VM_NAME.vdi" ]; then
+    error "Please create the VM and image first and install macOS."
+    exit 91  
+  fi  
+
+  ejectAll
+  
+  # no luck with with qemu-nbd or vdfuse and no r/w with vhdimount
   if ! type vdmutil >/dev/null 2>&1; then
     error "'vdmutil' not installed. Install it via 'brew cask install paragon-vmdk-mounter'"
     exit 90
   fi
-  
-  if [ ! -d "TheTechBlogger" ]; then
-    error "'TheTechBlogger' does not exist. Get it via Google'"
-    exit 91  
-  fi
-    
-  ejectAll
-  
-  # no luck with with qemu-nbd or vdfuse and no r/w with vhdimount
   EFI_DEVICE=$(vdmutil attach "$VM_DIR/$VM_NAME.vdi"|grep "/dev"|head -n1)
   diskutil mount "${EFI_DEVICE}s1"
-
-  if [ ! -d "/Volumes/EFI/EFI" ]; then
-    error "'/Volumes/EFI/EFI' does not exist. Something went wrong'"
-    exit 92
-  fi
   
-  # Drivers from TheTechBlogger
-  # Todo: get the drivers automatically from https://github.com/acidanthera/AppleSupportPkg
-  mkdir /Volumes/EFI/EFI/drivers >/dev/null 2>&1 || true
-  cp TheTechBlogger/EFI/drivers/* /Volumes/EFI/EFI/drivers/
+  # add APFS driver to EFI
+  mkdir -p /Volumes/EFI/EFI/drivers >/dev/null 2>&1 || true
+  cp "$FILE_EFI" /Volumes/EFI/EFI/drivers/
   
   # Create startup script
   cat <<EOT > /Volumes/EFI/startup.nsh
 load fs0:\EFI\drivers\*
 map -r
-fs1:\System\Library\CoreServices\boot.efi
 fs2:\System\Library\CoreServices\boot.efi
+"fs2:\macOS Install Data\Locked Files\Boot Files\boot.efi"
 fs3:\System\Library\CoreServices\boot.efi
+"fs3:\macOS Install Data\Locked Files\Boot Files\boot.efi"
+fs4:\System\Library\CoreServices\boot.efi
+"fs4:\macOS Install Data\Locked Files\Boot Files\boot.efi"
+fs1:\System\Library\CoreServices\boot.efi
+"fs1:\macOS Install Data\Locked Files\Boot Files\boot.efi"
 EOT
   
+  # Cleanup
   diskutil unmount "${EFI_DEVICE}s1"
   diskutil eject "${EFI_DEVICE}"
+  
+  # Skip installation DVD to boot from new disk
+  VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --medium none
 }
 
 createVM() {
@@ -283,8 +285,8 @@ createVM() {
     VBoxManage setextradata "$VM_NAME" VBoxInternal2/EfiGraphicsResolution "$VM_RES"
     VBoxManage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAHCI --hostiocache on
     VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$VM_DIR/$VM_NAME.vdi"
-    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type dvddrive --medium "$DST_CLOVER.iso"
-    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --medium "$DST_ISO"
+    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type dvddrive --hotpluggable on --medium "$DST_CLOVER.iso"
+    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --hotpluggable on --medium "$DST_ISO"
   else
     result "already exists."
   fi
@@ -295,11 +297,7 @@ runVM() {
   if ! VBoxManage showvminfo 'macOS-Mojave' | grep "State:" | grep -i running >/dev/null; then
     result "."
     VBoxManage startvm "$VM_NAME" --type gui
-    echo "Next steps:"
-    echo "  1. Disk Utility: erase the virtual drive using APFS and call it 'Mojave' (it will be converted otherwise)"
-    echo "  2. Install macOS: on the erased virtual drive 'Mojave' (around 4 minutes)"
-    echo "  3. After the reboot: switch off the VM, remove the virtual macOS installer CD-ROM and restart"
-    echo "  4. Start macOS in the Clover boot menu (the initial installation might take a few hours)"
+    result "After initial installation, shutdown VM and run 'make patch'."
   else
     result "already running."
   fi
@@ -338,11 +336,11 @@ main() {
     stash) VBoxManage unregistervm --delete "$VM_NAME" || true ;;
     installer) createImage ;;
     clover) createClover ;;
-    unclover) unClover ;;
+    patch) patchEFI ;;
     vm) createVM ;;
     run) runVM ;;
     all) runChecks && createImage && createClover && createVM && runVM ;;
-    *) echo "Possible commands: clean, stash, all, check, installer, clover, unclover, vm, run" >&4 ;;
+    *) echo "Possible commands: clean, stash, all, check, installer, clover, patch, vm, run" >&4 ;;
     esac
   done
 }
