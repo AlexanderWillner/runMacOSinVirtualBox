@@ -3,13 +3,16 @@ SHELL=bash
 
 help:
 	@echo "Some available commands:"
-	@echo " * all      : run everything needed (check, installer, clover, vm, run)"
+	@echo " * all      : run everything needed (check, installer, vm, patch, run, stop, eject)"
 	@echo " * check    : check environment"
 	@echo " * installer: create macOS installer image"
 	@echo " * clover   : create clover boot image"
 	@echo " * patch    : add APFS drivers to VM EFI to boot w/o clover"
 	@echo " * vm       : create VM and disk"
 	@echo " * run      : run VM"
+	@echo " * stop     : stop VM"
+	@echo " * wait     : wait for VM to stop"
+	@echo " * eject    : eject installer medium"
 	@echo " * clean    : delete generated images and downloaded files"
 	@echo " * stash    : delete generated VM and disk"
 	@echo " * test     : test shell scripts"
@@ -18,9 +21,8 @@ help:
 	@echo " * release  : make new release"
 	@echo " * feedback : create a GitHub issue"
 
-image: all
-
-all: check installer clover vm run
+all:
+	@bash  $(SCRIPT) all
 
 check:
 	@bash  $(SCRIPT) check
@@ -39,6 +41,15 @@ vm:
 
 run:
 	@bash  $(SCRIPT) run
+
+stop:
+	@bash  $(SCRIPT) stop
+
+wait:
+	@bash  $(SCRIPT) wait
+
+eject:
+	@bash  $(SCRIPT) eject
 
 clean:
 	@bash  $(SCRIPT) clean
@@ -73,4 +84,4 @@ release:
 	@open app
 	@open https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases
 
-.PHONY: image clean feedback test harden style check release
+.PHONY: all clean feedback test harden style check release

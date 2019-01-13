@@ -25,6 +25,7 @@ readonly VM_NAME="${VM_NAME:-macOS-Mojave}"
 readonly VM_DIR="${VM_DIR:-$DST_DIR/$VM_NAME}"
 readonly VM_SIZE="${VM_SIZE:-32768}"
 readonly VM_RES="${VM_RES:-1680x1050}"
+readonly VM_SCALE="${VM_SCALE:-2.0}"
 readonly VM_RAM="${VM_RAM:-4096}"
 readonly VM_VRAM="${VM_VRAM:-128}"
 readonly VM_CPU="${VM_CPU:-2}"
@@ -121,15 +122,6 @@ runChecks() {
       exit 2
     fi
   fi
-  if ! type xz >/dev/null 2>&1; then
-    error "'xz' not installed. Trying to install automatically, if you've brew installed..."
-    if type brew >/dev/null 2>&1; then
-      brew install xz || exit 3
-      brew link xz || exit 3
-    else
-      exit 3
-    fi
-  fi
   awk >/dev/null 2>&1
   if [ ! $? -eq 1 ]; then
     error "Something is wrong with your 'awk' installation. Trying to fix it automatically, if you've brew installed..."
@@ -148,6 +140,12 @@ runChecks() {
     error "'$FILE_CFG' not found. Not checked out? (press enter in the terminal when done)..."
     read -r
     exit 5
+  fi
+  
+  # no luck with with qemu-nbd or vdfuse and no r/w with vhdimount - so vdmutil it is
+  if ! type vdmutil >/dev/null 2>&1; then
+    error "'vdmutil' not installed. Install it via 'brew cask install paragon-vmdk-mounter'"
+    exit 9
   fi
 }
 
@@ -195,6 +193,17 @@ createImage() {
 createClover() {
   info "Creating clover image '$DST_CLOVER.iso' (around 30 seconds)..."
   ejectAll
+  
+  if ! type xz >/dev/null 2>&1; then
+    error "'xz' not installed. Trying to install automatically, if you've brew installed..."
+    if type brew >/dev/null 2>&1; then
+      brew install xz || exit 3
+      brew link xz || exit 3
+    else
+      exit 3
+    fi
+  fi
+
   if [ ! -e "$DST_CLOVER.iso" ]; then
     result "."
     mkdir -p "$DST_DIR"
@@ -221,29 +230,30 @@ createClover() {
 }
 
 patchEFI() {
-  # todo: this is a second draft for #37
-  info "Adding APFS drivers to EFI in '$VM_DIR/$VM_NAME.vdi' (around 2 seconds)..."
-  
+  info "Adding APFS drivers to EFI in '$VM_DIR/$VM_NAME.vdi' (around 5 seconds)..."
+  result "."
+
   if [ ! -f "$VM_DIR/$VM_NAME.vdi" ]; then
-    error "Please create the VM and image first and install macOS."
+    error "Please create the VM and image first."
     exit 91  
   fi  
 
   ejectAll
   
-  # no luck with with qemu-nbd or vdfuse and no r/w with vhdimount
-  if ! type vdmutil >/dev/null 2>&1; then
-    error "'vdmutil' not installed. Install it via 'brew cask install paragon-vmdk-mounter'"
-    exit 90
-  fi
   EFI_DEVICE=$(vdmutil attach "$VM_DIR/$VM_NAME.vdi"|grep "/dev"|head -n1)
+  
+  # initialize disk if needed
+  if [ ! -f  "${EFI_DEVICE}s1" ]; then
+    diskutil partitionDisk "${EFI_DEVICE}" 1 JHFS+ "$VM_NAME" R  
+  fi
+  
   diskutil mount "${EFI_DEVICE}s1"
   
   # add APFS driver to EFI
   mkdir -p /Volumes/EFI/EFI/drivers >/dev/null 2>&1 || true
   cp "$FILE_EFI" /Volumes/EFI/EFI/drivers/
   
-  # Create startup script
+  # create startup script to boot macOS or the macOS installer
   cat <<EOT > /Volumes/EFI/startup.nsh
 load fs0:\EFI\drivers\*
 map -r
@@ -256,13 +266,10 @@ fs4:\System\Library\CoreServices\boot.efi
 fs1:\System\Library\CoreServices\boot.efi
 "fs1:\macOS Install Data\Locked Files\Boot Files\boot.efi"
 EOT
-  
-  # Cleanup
+
+  # close disk again
   diskutil unmount "${EFI_DEVICE}s1"
   diskutil eject "${EFI_DEVICE}"
-  
-  # Skip installation DVD to boot from new disk
-  VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --medium none
 }
 
 createVM() {
@@ -283,6 +290,7 @@ createVM() {
     VBoxManage modifyvm "$VM_NAME" --usbxhci on --memory "$VM_RAM" --vram "$VM_VRAM" --cpus "$VM_CPU" --firmware efi --chipset ich9 --mouse usbtablet --keyboard usb
     VBoxManage setextradata "$VM_NAME" "CustomVideoMode1" "${VM_RES}x32"
     VBoxManage setextradata "$VM_NAME" VBoxInternal2/EfiGraphicsResolution "$VM_RES"
+    VBoxManage setextradata "$VM_NAME" GUI/ScaleFactor "$VM_SCALE"
     VBoxManage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAHCI --hostiocache on
     VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$VM_DIR/$VM_NAME.vdi"
     VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type dvddrive --hotpluggable on --medium "$DST_CLOVER.iso"
@@ -294,10 +302,9 @@ createVM() {
 
 runVM() {
   info "Starting VM '$VM_NAME' (3 minutes in the VM)..." 100
-  if ! VBoxManage showvminfo 'macOS-Mojave' | grep "State:" | grep -i running >/dev/null; then
+  if ! VBoxManage showvminfo "$VM_NAME" | grep "State:" | grep -i running >/dev/null; then
     result "."
     VBoxManage startvm "$VM_NAME" --type gui
-    result "After initial installation, shutdown VM and run 'make patch'."
   else
     result "already running."
   fi
@@ -305,6 +312,30 @@ runVM() {
 
 runClean() {
   rm -f Clover-v2.4k-4533-X64.iso clover.tar* "$FILE_LOG" "$DST_CLOVER.iso" "$DST_CLOVER.dmg" "$DST_DMG" "$DST_ISO" || true
+}
+
+waitVM() {
+  info "Waiting for VM '$VM_NAME' to shutdown..."
+  result "."
+  while VBoxManage showvminfo "$VM_NAME"|grep -E "State:.*running" >/dev/null; do
+     sleep 5
+  done
+  true
+}
+
+stopVM() {
+  info "Press enter to stop VM '$VM_NAME'..."
+  result "."
+  read
+  VBoxManage controlvm "$VM_NAME" poweroff
+  true
+}
+
+eject() {
+  info "Ejecting installer DVD for VM '$VM_NAME'..."
+  result "."
+  # Skip installation DVD to boot from new disk
+  VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --medium none >/dev/null 2>&1||true
 }
 
 cleanup() {
@@ -339,8 +370,11 @@ main() {
     patch) patchEFI ;;
     vm) createVM ;;
     run) runVM ;;
-    all) runChecks && createImage && createClover && createVM && runVM ;;
-    *) echo "Possible commands: clean, stash, all, check, installer, clover, patch, vm, run" >&4 ;;
+    wait) waitVM ;;
+    stop) stopVM ;;
+    eject) eject ;;
+    all) runChecks && createImage && createVM && patchEFI && runVM && stopVM && eject && runVM ;;
+    *) echo "Possible commands: clean, stash, all, check, installer, clover, patch, vm, run, stop, wait" >&4 ;;
     esac
   done
 }

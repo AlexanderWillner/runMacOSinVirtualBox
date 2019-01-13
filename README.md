@@ -2,7 +2,7 @@
 
 ## Overview
 
-Simple script to automatically download, install and run macOS 10.14 Mojave (and other versions) in VirtualBox on macOS. Since VirtualBox 5.2 does not support booting from APFS volumes, this script is using the [Clover EFI bootloader](https://sourceforge.net/projects/cloverefiboot/) as a workaround. Notice: the VirtualBox Extension Pack will be needed, that are released under the Personal Use and Evaluation License (PUEL).
+Simple script to automatically download, install and run macOS 10.14 Mojave (and other versions) in VirtualBox on macOS. Since VirtualBox does not support booting from APFS volumes, this script is copying the APFS EFI drivers automatically.
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/722e2f9736844387b611945fb430d195)](https://app.codacy.com/app/AlexanderWillner/runMacOSinVirtualBox?utm_source=github.com&utm_medium=referral&utm_content=AlexanderWillner/runMacOSinVirtualBox&utm_campaign=Badge_Grade_Dashboard)
 
@@ -13,19 +13,29 @@ Simple script to automatically download, install and run macOS 10.14 Mojave (and
  * [Shell Hacker](#shell-hacker)
  * [FAQ](#faq)
 
-##  Quick Guide
+
+##  Required Software
+
+The following software is needed.
+
+ * macOS Installer
+ * VirtualBox
+ * VirtualBox Extension Pack (note: released under the Personal Use and Evaluation License)
+ * Paragon VMDK Mounter (note: discontinued, but still available)
+
+##  Quick Guide (Deprecated)
 
 [![RunMojaveVirtualbox.app](img/app.png)](https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases/download/1.2/RunMojaveVirtualbox.app.zip)
 
 Download the app [```RunMojaveVirtualbox.app```](https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases/download/1.2/RunMojaveVirtualbox.app.zip) and move it to the Applications folder. Then execute it (via right click > Open).
 
-##  Video
+##  Video (Deprecated)
  
 Four minute summary video:
 
 [![Short Summary Video](https://img.youtube.com/vi/Sr2_v_OtxIY/0.jpg)](https://youtu.be/Sr2_v_OtxIY)
  
-## Step by Step Guide
+## Step by Step Guide (Deprecated)
 
 1. Download macOS ([stable](https://itunes.apple.com/us/app/macos-mojave/id1398502828?mt=12) / [beta](https://beta.apple.com/sp/betaprogram/redemption#macos)) first. Note that you need to use a Mac to do so.
 2. Around 2 minutes after executing this script/app you should have a configured and running VM:
@@ -46,7 +56,7 @@ Four minute summary video:
 
 ## Shell Hacker
 
-Execute ```make all``` to setup and run everything:
+Execute ```make all``` to setup and run everything. After the installer reboots, press enter to finish the installation.
 
 ```
 $ time make all
@@ -72,7 +82,7 @@ Additionally the following parameters can be customized with environment variabl
 
 | variable name | description                                         | default value                |
 |---------------|-----------------------------------------------------|------------------------------|
-| VM_NAME       | name of the virtual machine                         |  macOS-Mojave                |
+| VM_NAME       | name of the virtual machine                         | macOS-Mojave                 |
 | VM_DIR        | directory, where the virtual machine will be stored | HOME/VirtualBox VMs/$VM_NAME |
 | VM_SIZE       | the size of the hard disk                           | 32768                        |
 | VM_RES        | monitor resolution                                  | 1680x1050                    |
