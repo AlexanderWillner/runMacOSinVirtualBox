@@ -293,8 +293,7 @@ createVM() {
     VBoxManage setextradata "$VM_NAME" GUI/ScaleFactor "$VM_SCALE"
     VBoxManage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAHCI --hostiocache on
     VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$VM_DIR/$VM_NAME.vdi"
-    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type dvddrive --hotpluggable on --medium "$DST_CLOVER.iso"
-    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --hotpluggable on --medium "$DST_ISO"
+    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type dvddrive --hotpluggable on --medium "$DST_ISO"
   else
     result "already exists."
   fi
@@ -324,18 +323,18 @@ waitVM() {
 }
 
 stopVM() {
-  info "Press enter to stop VM '$VM_NAME'..."
+  info "Press enter to stop VM '$VM_NAME' (e.g. after installer restarted)..."
   result "."
   read
-  VBoxManage controlvm "$VM_NAME" poweroff
-  true
+  VBoxManage controlvm "$VM_NAME" poweroff||true
+  sleep 5
 }
 
 eject() {
   info "Ejecting installer DVD for VM '$VM_NAME'..."
   result "."
   # Skip installation DVD to boot from new disk
-  VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --medium none >/dev/null 2>&1||true
+  VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type dvddrive --medium emptydrive >/dev/null 2>&1||true
 }
 
 cleanup() {
