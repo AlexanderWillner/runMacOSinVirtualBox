@@ -23,57 +23,29 @@ The following software is needed.
  * VirtualBox Extension Pack (note: released under the Personal Use and Evaluation License)
  * Paragon VMDK Mounter (note: discontinued, but still available)
 
-##  Quick Guide (Deprecated)
-
-[![RunMojaveVirtualbox.app](img/app.png)](https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases/download/1.2/RunMojaveVirtualbox.app.zip)
-
-Download the app [```RunMojaveVirtualbox.app```](https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases/download/1.2/RunMojaveVirtualbox.app.zip) and move it to the Applications folder. Then execute it (via right click > Open).
-
-##  Video (Deprecated)
+## Step by Step Video
  
-Four minute summary video:
+Two minute summary video:
 
-[![Short Summary Video](https://img.youtube.com/vi/Sr2_v_OtxIY/0.jpg)](https://youtu.be/Sr2_v_OtxIY)
- 
-## Step by Step Guide (Deprecated)
+[![Short Summary Video](https://img.youtube.com/vi/WmETOgRuMx4/0.jpg)](https://youtu.be/WmETOgRuMx4)
 
-1. Download macOS ([stable](https://itunes.apple.com/us/app/macos-mojave/id1398502828?mt=12) / [beta](https://beta.apple.com/sp/betaprogram/redemption#macos)) first. Note that you need to use a Mac to do so.
-2. Around 2 minutes after executing this script/app you should have a configured and running VM:
-![Images](img/images.png)
-3. After booting erase the virtual drive ```VBOX HARDDISK Media``` in Disk Utility using APFS and name it 'Mojave':
-![Erase Disk](img/erase.png)
-4. Install macOS on the erased virtual drive 'Mojave' (around 4 minutes):
-![Install](img/install.png)
-5. After the reboot switch off the VM and remove ```macOS-Mojave.iso.cdr``` and restart:
-![Remove](img/remove.png)
-6. Start macOS in the Clover boot menu (the initial installation might take some time):
-![Clover](img/clover.png)
-![Install](img/install2.png)
-7. Enjoy macOS in Virtualbox:
-![Running macOS 10.14 Mojave Beta 1 in VirtualBox 5.2](img/macosMojaveBeta1.png)
-8. (optional) Remove the need to mount the Clover ISO file ( thanks to Issue #13 ) by running this command in a Terminal window within the virtual machine and remove the ISO from the setup afterwards:
-```sudo sh /Volumes/NO\ NAME/moveCloverToEFI.sh```
+## Step by Step
 
-## Shell Hacker
-
-Execute ```make all``` to setup and run everything. After the installer reboots, press enter to finish the installation.
+Execute ```make all``` to setup and run everything. After the installer reboots, press enter in the terminal to finish the installation.
 
 ```
-$ time make all
+$ make all
 Running checks (around 1 second)....
-Creating image '/tmp/macOS-Mojave.dmg' (around 20 seconds, will need sudo)....
-Password:
-Creating iso '/tmp/macOS-Mojave.iso.cdr' (around 25 seconds)....
-Creating clover image '/tmp/macOS-MojaveClover.iso' (around 30 seconds)....
- - Extracting APFS EFI driver (around 3 seconds)....
- - Downloading Clover (needs Internet access)...
+Creating image '/Users/awi/VirtualBox VMs/macOS-Mojave.dmg' (around 20 seconds, version 14.2.2, will need sudo)....
+Creating iso '/Users/awi/VirtualBox VMs/macOS-Mojave.iso.cdr' (around 25 seconds)....
 Creating VM HDD '/Users/awi/VirtualBox VMs/macOS-Mojave/macOS-Mojave.vdi' (around 5 seconds)....
 Creating VM 'macOS-Mojave' (around 2 seconds)....
-Starting VM 'macOS-Mojave' (around 3 minutes in the VM)....
+Adding APFS drivers to EFI in '/Users/awi/VirtualBox VMs/macOS-Mojave/macOS-Mojave.vdi' (around 5 seconds)....
+Starting VM 'macOS-Mojave' (3 minutes in the VM)....
+Press enter to stop VM 'macOS-Mojave' (e.g. after installer restarted)....
 
-real	1m21.689s
-user	0m19.641s
-sys	0m14.779s
+Ejecting installer DVD for VM 'macOS-Mojave'....
+Starting VM 'macOS-Mojave' (3 minutes in the VM)....
 ```
 
 ### Customizing your build
@@ -96,17 +68,22 @@ Execute ```make``` to get some help:
 ```
 $ make
 Some available commands:
- * all      : run everything needed (check, installer, clover, vm, run)
+ * all      : run everything needed (check, installer, vm, patch, run, stop, eject)
  * check    : check environment
  * installer: create macOS installer image
  * clover   : create clover boot image
+ * patch    : add APFS drivers to VM EFI to boot w/o clover
  * vm       : create VM and disk
  * run      : run VM
+ * stop     : stop VM
+ * wait     : wait for VM to stop
+ * eject    : eject installer medium
  * clean    : delete generated images and downloaded files
  * stash    : delete generated VM and disk
  * test     : test shell scripts
  * style    : style shell scripts
  * harden   : harden shell scripts
+ * release  : make new release
  * feedback : create a GitHub issue
 ```
 
@@ -114,18 +91,18 @@ Some available commands:
 
 * Error Message
   * Q: I get the error code 2, 3, 4, or 6.
-  * A: You need to have some software components installed on your machine (VirtualBox, VirtualBox Extension Pack, xz, awk). If you've installed http://brew.sh, the script will install these automatically. Otherwise, you need to install them manually.
+  * A: You need to have some software components installed on your machine (VirtualBox, VirtualBox Extension Pack, awk). If you've installed http://brew.sh, the script will partly install these automatically. Otherwise, you need to install them manually.
 * Reboot
   * Q: I see the message ```MACH Reboot```. What should I do?
   * A: The VM failed to restart. Restart manually.
 * Installation Loop
   * Q: After starting the installation the VM restarts and I see the installer again.
-  * A: You forgot to remove the installation CD. Switch off the VM and go to step 4.
+  * A: You've to press enter in the terminal after the installer restarts.
 * Kernel Panic
   * Q: I see the message ```Error loading kernel cache (0x9)```. What should I do?
   * A: This error is shown from time to time. Restart the VM.
 * Black Screen
-  * Q: When I then boot I don't get the Clover boot menu, just a black screen. What should I do?
+  * Q: When I then boot I don't see anything, just a black screen. What should I do?
   * A: Change the VM version in the settings from ```Mac OS X (64-bit)``` to ```macOS 10.13 High Sierra (64-bit)```
 * Other Issue
   * Q: Something is not working. What should I do?
