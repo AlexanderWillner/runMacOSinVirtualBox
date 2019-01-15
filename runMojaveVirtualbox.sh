@@ -243,8 +243,9 @@ patchEFI() {
   EFI_DEVICE=$(vdmutil attach "$DST_DIR/$VM_NAME.vdi"|grep "/dev"|head -n1)
   
   # initialize disk if needed
-  if [ ! -f  "${EFI_DEVICE}s1" ]; then
-    diskutil partitionDisk "${EFI_DEVICE}" 1 JHFS+ "$VM_NAME" R
+  if [ ! -e  "${EFI_DEVICE}s1" ]; then
+    info "Press enter to create new partition on '$DST_DIR/$VM_NAME.vdi'..."; read
+    diskutil partitionDisk "${EFI_DEVICE}" 1 APFS "$VM_NAME" R
   fi
   
   diskutil mount "${EFI_DEVICE}s1"
@@ -257,13 +258,13 @@ patchEFI() {
   cat <<EOT > /Volumes/EFI/startup.nsh
 @echo -off
 load "fs0:\EFI\drivers\apfs.efi"
-bcfg driver add 1 "fs0:\EFI\drivers\apfs.efi" "APFS Filesystem Driver"
+#fixme bcfg driver add 0 "fs0:\\EFI\\drivers\\apfs.efi" "APFS Filesystem Driver"
 map -r
 echo "Trying to find bootable device..."
 for %p in "System\Library\CoreServices" "macOS Install Data\Locked Files\Boot Files" "macOS Install Data" ".IABootFiles" "OS X Install Data" "Mac OS X Install Data"
   for %d in fs1 fs2 fs3 fs4 fs5 fs6
     if exist "%d:\%p\boot.efi" then
-      bcfg boot add 0 "%d:\%p\boot.efi" "macOS"
+      #fixme: bcfg boot add 0 "%d:\\%p\\boot.efi" "macOS"
       "%d:\%p\boot.efi"
     endif
   endfor
