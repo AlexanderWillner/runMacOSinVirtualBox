@@ -372,7 +372,7 @@ main() {
     wait) waitVM ;;
     stop) stopVM ;;
     eject) eject ;;
-    all) runChecks && createImage && createVM && patchEFI && runVM && stopVM && eject && runVM ;;
+    all) runChecks && clover && createImage && createVM && patchEFI && runVM && stopVM && eject && runVM ;;
     *) echo "Possible commands: clean, stash, all, check, installer, clover, patch, vm, run, stop, wait" >&4 ;;
     esac
   done
