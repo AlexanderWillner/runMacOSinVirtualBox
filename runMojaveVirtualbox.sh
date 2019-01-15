@@ -244,27 +244,31 @@ patchEFI() {
   
   # initialize disk if needed
   if [ ! -f  "${EFI_DEVICE}s1" ]; then
-    diskutil partitionDisk "${EFI_DEVICE}" 1 JHFS+ "$VM_NAME" R  
+    diskutil partitionDisk "${EFI_DEVICE}" 1 JHFS+ "$VM_NAME" R
   fi
   
   diskutil mount "${EFI_DEVICE}s1"
   
   # add APFS driver to EFI
-  mkdir -p /Volumes/EFI/EFI/drivers >/dev/null 2>&1 || true
+  mkdir -p /Volumes/EFI/EFI/drivers >/dev/null 2>&1||true
   cp "$FILE_EFI" /Volumes/EFI/EFI/drivers/
   
   # create startup script to boot macOS or the macOS installer
   cat <<EOT > /Volumes/EFI/startup.nsh
-load fs0:\EFI\drivers\*
+@echo -off
+load "fs0:\EFI\drivers\apfs.efi"
+bcfg driver add 1 "fs0:\EFI\drivers\apfs.efi" "APFS Filesystem Driver"
 map -r
-fs2:\System\Library\CoreServices\boot.efi
-"fs2:\macOS Install Data\Locked Files\Boot Files\boot.efi"
-fs3:\System\Library\CoreServices\boot.efi
-"fs3:\macOS Install Data\Locked Files\Boot Files\boot.efi"
-fs4:\System\Library\CoreServices\boot.efi
-"fs4:\macOS Install Data\Locked Files\Boot Files\boot.efi"
-fs1:\System\Library\CoreServices\boot.efi
-"fs1:\macOS Install Data\Locked Files\Boot Files\boot.efi"
+echo "Trying to find bootable device..."
+for %p in "System\Library\CoreServices" "macOS Install Data\Locked Files\Boot Files" "macOS Install Data" ".IABootFiles" "OS X Install Data" "Mac OS X Install Data"
+  for %d in fs1 fs2 fs3 fs4 fs5 fs6
+    if exist "%d:\%p\boot.efi" then
+      bcfg boot add 0 "%d:\%p\boot.efi" "macOS"
+      "%d:\%p\boot.efi"
+    endif
+  endfor
+endfor
+echo "Failed."
 EOT
 
   # close disk again
@@ -294,6 +298,8 @@ createVM() {
     VBoxManage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAHCI --hostiocache on
     VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$VM_DIR/$VM_NAME.vdi"
     VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type dvddrive --hotpluggable on --medium "$DST_ISO"
+    VBoxManage modifyvm "$VM_NAME" --boot1 disk
+    VBoxManage modifyvm "$VM_NAME" --boot2 dvd    
   else
     result "already exists."
   fi
