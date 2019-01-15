@@ -230,17 +230,17 @@ createClover() {
 }
 
 patchEFI() {
-  info "Adding APFS drivers to EFI in '$VM_DIR/$VM_NAME.vdi' (around 5 seconds)..."
+  info "Adding APFS drivers to EFI in '$DST_DIR/$VM_NAME.vdi' (around 5 seconds)..."
   result "."
 
-  if [ ! -f "$VM_DIR/$VM_NAME.vdi" ]; then
+  if [ ! -f "$DST_DIR/$VM_NAME.vdi" ]; then
     error "Please create the VM and image first."
     exit 91  
   fi  
 
   ejectAll
   
-  EFI_DEVICE=$(vdmutil attach "$VM_DIR/$VM_NAME.vdi"|grep "/dev"|head -n1)
+  EFI_DEVICE=$(vdmutil attach "$DST_DIR/$VM_NAME.vdi"|grep "/dev"|head -n1)
   
   # initialize disk if needed
   if [ ! -f  "${EFI_DEVICE}s1" ]; then
@@ -280,10 +280,10 @@ createVM() {
   if [ ! -e "$VM_DIR" ]; then
     mkdir -p "$VM_DIR"
   fi
-  info "Creating VM HDD '$VM_DIR/$VM_NAME.vdi' (around 5 seconds)..." 90
-  if [ ! -e "$VM_DIR/$VM_NAME.vdi" ]; then
+  info "Creating VM HDD '$DST_DIR/$VM_NAME.vdi' (around 5 seconds)..." 90
+  if [ ! -e "$DST_DIR/$VM_NAME.vdi" ]; then
     result "."
-    VBoxManage createhd --filename "$VM_DIR/$VM_NAME.vdi" --variant Standard --size "$VM_SIZE"
+    VBoxManage createhd --filename "$DST_DIR/$VM_NAME.vdi" --variant Standard --size "$VM_SIZE"
   else
     result "already exists."
   fi
@@ -296,7 +296,7 @@ createVM() {
     VBoxManage setextradata "$VM_NAME" VBoxInternal2/EfiGraphicsResolution "$VM_RES"
     VBoxManage setextradata "$VM_NAME" GUI/ScaleFactor "$VM_SCALE"
     VBoxManage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAHCI --hostiocache on
-    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$VM_DIR/$VM_NAME.vdi"
+    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$DST_DIR/$VM_NAME.vdi"
     VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type dvddrive --hotpluggable on --medium "$DST_ISO"
     VBoxManage modifyvm "$VM_NAME" --boot1 disk
     VBoxManage modifyvm "$VM_NAME" --boot2 dvd    
@@ -369,7 +369,8 @@ main() {
     case "$ARG" in
     check) runChecks ;;
     clean) runClean ;;
-    stash) VBoxManage unregistervm --delete "$VM_NAME" || true ;;
+    stash) VBoxManage unregistervm --delete "$VM_NAME"||true ;;
+    stashvm) VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type dvddrive --medium emptydrive >/dev/null 2>&1||true ; VBoxManage unregistervm --delete "$VM_NAME"||true ;;
     installer) createImage ;;
     clover) createClover ;;
     patch) patchEFI ;;

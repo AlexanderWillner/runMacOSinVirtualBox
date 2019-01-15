@@ -15,6 +15,7 @@ help:
 	@echo " * eject    : eject installer medium"
 	@echo " * clean    : delete generated images and downloaded files"
 	@echo " * stash    : delete generated VM and disk"
+	@echo " * stashvm  : delete generated VM and NOT the disk"
 	@echo " * test     : test shell scripts"
 	@echo " * style    : style shell scripts"
 	@echo " * harden   : harden shell scripts"
@@ -56,6 +57,9 @@ clean:
 
 stash:
 	@bash  $(SCRIPT) stash
+
+stashvm:
+	@bash  $(SCRIPT) stashvm
 
 feedback:
 	@open https://github.com/alexanderwillner/runMacOSinVirtualBox/issues
