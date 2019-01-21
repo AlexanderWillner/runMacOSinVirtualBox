@@ -147,6 +147,10 @@ runChecks() {
     error "'vdmutil' not installed. Install it via 'brew cask install paragon-vmdk-mounter'"
     exit 9
   fi
+  if [ -z "$(vdmutil 2>&1|grep 'Paragon')" ] ; then
+    error "Wrong 'vdmutil' installed. Install it via 'brew cask install paragon-vmdk-mounter'"
+    exit 10
+  fi  
 }
 
 ejectAll() {
