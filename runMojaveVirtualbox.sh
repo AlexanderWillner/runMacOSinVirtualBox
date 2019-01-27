@@ -244,8 +244,15 @@ patchEFI() {
 
   ejectAll
   
-  EFI_DEVICE=$(vdmutil attach "$DST_DIR/$VM_NAME.vdi"|grep "/dev"|head -n1)
+  EFI_DEVICE=$(vdmutil attach "$DST_DIR/$VM_NAME.vdi" 2>&1)
+  result="$?"
+  if [ "$result" -ne "0" ]; then
+    error "Couldn't mount EFI disk: $EFI_DEVICE"
+    exit 92
+  fi
   
+  EFI_DEVICE=$(echo $EFI_DEVICE|egrep -o '/dev/disk[[:digit:]]{1}' |head -n1)
+
   # initialize disk if needed
   if [ ! -e  "${EFI_DEVICE}s1" ]; then
     info "Press enter to create new partition on '$DST_DIR/$VM_NAME.vdi'..."; read
@@ -265,7 +272,7 @@ load "fs0:\EFI\drivers\apfs.efi"
 #fixme bcfg driver add 0 "fs0:\\EFI\\drivers\\apfs.efi" "APFS Filesystem Driver"
 map -r
 echo "Trying to find bootable device..."
-for %p in "System\Library\CoreServices" "macOS Install Data\Locked Files\Boot Files" "macOS Install Data" ".IABootFiles" "OS X Install Data" "Mac OS X Install Data"
+for %p in "macOS Install Data" "macOS Install Data\Locked Files\Boot Files" ".IABootFiles" "OS X Install Data" "Mac OS X Install Data" "System\Library\CoreServices"
   for %d in fs1 fs2 fs3 fs4 fs5 fs6
     if exist "%d:\%p\boot.efi" then
       #fixme: bcfg boot add 0 "%d:\\%p\\boot.efi" "macOS"
