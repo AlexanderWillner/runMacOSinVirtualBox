@@ -21,11 +21,10 @@ The following software is needed.
  * macOS Installer
  * VirtualBox
  * VirtualBox Extension Pack (note: released under the Personal Use and Evaluation License)
- * Paragon VMDK Mounter (note: discontinued, but still available)
 
 ## Step by Step Video
  
-Two minute summary video:
+Two minute summary video (now an additional step is needed in the installer to initialize the disk first):
 
 [![Short Summary Video](https://img.youtube.com/vi/WmETOgRuMx4/0.jpg)](https://youtu.be/WmETOgRuMx4)
 

@@ -33,6 +33,7 @@ readonly DST_DMG="$DST_DIR/$VM_NAME.dmg"
 readonly DST_CLOVER="$DST_DIR/${VM_NAME}Clover"
 readonly DST_VOL="/Volumes/$VM_NAME"
 readonly DST_ISO="$DST_DIR/$VM_NAME.iso.cdr"
+readonly DST_SPARSE="$DST_DIR/$VM_NAME.sparseimage"
 readonly FILE_EFI="/usr/standalone/i386/apfs.efi"
 readonly FILE_CFG="$SCRIPTPATH/config.plist"
 readonly FILE_EFIMOVER="$SCRIPTPATH/moveCloverToEFI.sh"
@@ -42,8 +43,8 @@ readonly FILE_LOG="$HOME/Library/Logs/runMojaveVirtualbox.log"
 # Logging #####################################################################
 exec 3>&1
 exec 4>&2
-exec 1>>"$FILE_LOG"
-exec 2>&1
+#exec 1>>"$FILE_LOG"
+#exec 2>&1
 ###############################################################################
 
 # Define methods ##############################################################
@@ -142,15 +143,6 @@ runChecks() {
     exit 5
   fi
   
-  # no luck with with qemu-nbd or vdfuse and no r/w with vhdimount - so vdmutil it is
-  if ! type vdmutil >/dev/null 2>&1; then
-    error "'vdmutil' not installed. Install it via 'brew cask install paragon-vmdk-mounter'"
-    exit 9
-  fi
-  if [ -z "$(vdmutil 2>&1|grep 'Paragon')" ] ; then
-    error "Wrong 'vdmutil' installed. Install it via 'brew cask install paragon-vmdk-mounter'"
-    exit 10
-  fi  
   if ! diskutil listFilesystems | grep -q APFS; then
     error "This host does not support required APFS filesystem. You must upgrade to High Sierra or later and try again."
     exit 11
@@ -238,17 +230,16 @@ createClover() {
 }
 
 patchEFI() {
-  info "Adding APFS drivers to EFI in '$DST_DIR/$VM_NAME.vdi' (around 5 seconds)..."
+  info "Adding APFS drivers to EFI in '$DST_DIR/$VM_NAME.efi.vdi' (around 5 seconds)..."
   result "."
 
-  if [ ! -f "$DST_DIR/$VM_NAME.vdi" ]; then
-    error "Please create the VM and image first."
-    exit 91  
-  fi  
-
   ejectAll
-  
-  EFI_DEVICE=$(vdmutil attach "$DST_DIR/$VM_NAME.vdi" 2>&1)
+
+  if [ ! -f "$DST_SPARSE" ]; then
+    hdiutil create -size 1m -fs MS-DOS -volname "EFI" "$DST_SPARSE"
+  fi
+
+  EFI_DEVICE=$(hdiutil attach -nomount "$DST_SPARSE" 2>&1)
   result="$?"
   if [ "$result" -ne "0" ]; then
     error "Couldn't mount EFI disk: $EFI_DEVICE"
@@ -256,12 +247,6 @@ patchEFI() {
   fi
   
   EFI_DEVICE=$(echo $EFI_DEVICE|egrep -o '/dev/disk[[:digit:]]{1}' |head -n1)
-
-  # initialize disk if needed
-  if [ ! -e  "${EFI_DEVICE}s1" ]; then
-    info "Press enter to create new partition on '$DST_DIR/$VM_NAME.vdi'..."; read
-    diskutil partitionDisk "${EFI_DEVICE}" 1 APFS "$VM_NAME" R
-  fi
   
   diskutil mount "${EFI_DEVICE}s1"
   
@@ -289,6 +274,7 @@ EOT
 
   # close disk again
   diskutil unmount "${EFI_DEVICE}s1"
+  VBoxManage convertfromraw "${EFI_DEVICE}" "$DST_DIR/$VM_NAME.efi.vdi" --format VDI
   diskutil eject "${EFI_DEVICE}"
 }
 
@@ -303,6 +289,9 @@ createVM() {
   else
     result "already exists."
   fi
+  if [ ! -e "$DST_DIR/$VM_NAME.efi.vdi" ]; then
+    patchEFI
+  fi
   info "Creating VM '$VM_NAME' (around 2 seconds)..." 99
   if ! VBoxManage showvminfo "$VM_NAME" >/dev/null 2>&1; then
     result "."
@@ -312,10 +301,11 @@ createVM() {
     VBoxManage setextradata "$VM_NAME" VBoxInternal2/EfiGraphicsResolution "$VM_RES"
     VBoxManage setextradata "$VM_NAME" GUI/ScaleFactor "$VM_SCALE"
     VBoxManage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAHCI --hostiocache on
-    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$DST_DIR/$VM_NAME.vdi"
-    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type dvddrive --hotpluggable on --medium "$DST_ISO"
+    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$DST_DIR/$VM_NAME.efi.vdi"
+    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type hdd --nonrotational on --medium "$DST_DIR/$VM_NAME.vdi"
+    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --hotpluggable on --medium "$DST_ISO"
     VBoxManage modifyvm "$VM_NAME" --boot1 disk
-    VBoxManage modifyvm "$VM_NAME" --boot2 dvd    
+    VBoxManage modifyvm "$VM_NAME" --boot2 dvd
   else
     result "already exists."
   fi
@@ -332,7 +322,7 @@ runVM() {
 }
 
 runClean() {
-  rm -f Clover-v2.4k-4533-X64.iso clover.tar* "$FILE_LOG" "$DST_CLOVER.iso" "$DST_CLOVER.dmg" "$DST_DMG" "$DST_ISO" || true
+  rm -f Clover-v2.4k-4533-X64.iso clover.tar* "$FILE_LOG" "$DST_CLOVER.iso" "$DST_CLOVER.dmg" "$DST_DMG" "$DST_ISO" "$DST_SPARSE" || true
 }
 
 waitVM() {
@@ -356,7 +346,7 @@ eject() {
   info "Ejecting installer DVD for VM '$VM_NAME'..."
   result "."
   # Skip installation DVD to boot from new disk
-  VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type dvddrive --medium emptydrive >/dev/null 2>&1||true
+  VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --medium emptydrive >/dev/null 2>&1||true
 }
 
 cleanup() {
