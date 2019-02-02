@@ -17,8 +17,8 @@ readonly SCRIPTPATH="$(
   cd "$(dirname "$0")" || exit
   pwd -P
 )"
-readonly INST_VERS="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' | wc -l | tr -d '[:space:]')"
-readonly INST_VER="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' -print -quit)"
+readonly INST_VERS="$(find /Applications -maxdepth 1 -type d -name 'Install macOS Mojave*' | wc -l | tr -d '[:space:]')"
+readonly INST_VER="$(find /Applications -maxdepth 1 -type d -name 'Install macOS Mojave*' -print -quit)"
 readonly INST_BIN="$INST_VER/Contents/Resources/createinstallmedia"
 readonly DST_DIR="${DST_DIR:-$HOME/VirtualBox VMs}"
 readonly VM_NAME="${VM_NAME:-macOS-Mojave}"
@@ -151,6 +151,10 @@ runChecks() {
     error "Wrong 'vdmutil' installed. Install it via 'brew cask install paragon-vmdk-mounter'"
     exit 10
   fi  
+  if ! diskutil listFilesystems | grep -q APFS; then
+    error "This host does not support required APFS filesystem. You must upgrade to High Sierra or later and try again."
+    exit 11
+  fi
 }
 
 ejectAll() {
