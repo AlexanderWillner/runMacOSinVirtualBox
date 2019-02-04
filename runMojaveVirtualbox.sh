@@ -25,7 +25,7 @@ readonly VM_NAME="${VM_NAME:-macOS-Mojave}"
 readonly VM_DIR="${VM_DIR:-$DST_DIR/$VM_NAME}"
 readonly VM_SIZE="${VM_SIZE:-32768}"
 readonly VM_RES="${VM_RES:-1680x1050}"
-readonly VM_SCALE="${VM_SCALE:-2.0}"
+readonly VM_SCALE="${VM_SCALE:-1.0}"
 readonly VM_RAM="${VM_RAM:-4096}"
 readonly VM_VRAM="${VM_VRAM:-128}"
 readonly VM_CPU="${VM_CPU:-2}"
@@ -33,7 +33,8 @@ readonly DST_DMG="$DST_DIR/$VM_NAME.dmg"
 readonly DST_CLOVER="$DST_DIR/${VM_NAME}Clover"
 readonly DST_VOL="/Volumes/$VM_NAME"
 readonly DST_ISO="$DST_DIR/$VM_NAME.iso.cdr"
-readonly DST_SPARSE="$DST_DIR/$VM_NAME.sparseimage"
+readonly DST_SPARSE="$DST_DIR/$VM_NAME.efi.sparseimage"
+readonly DST_SPARSE2="$DST_DIR/$VM_NAME.sparseimage"
 readonly FILE_EFI="/usr/standalone/i386/apfs.efi"
 readonly FILE_CFG="$SCRIPTPATH/config.plist"
 readonly FILE_EFIMOVER="$SCRIPTPATH/moveCloverToEFI.sh"
@@ -282,10 +283,23 @@ createVM() {
   if [ ! -e "$VM_DIR" ]; then
     mkdir -p "$VM_DIR"
   fi
-  info "Creating VM HDD '$DST_DIR/$VM_NAME.vdi' (around 5 seconds)..." 90
+  info "Creating VM HDD '$DST_DIR/$VM_NAME.vdi' (around 1 minute)..." 90
   if [ ! -e "$DST_DIR/$VM_NAME.vdi" ]; then
     result "."
-    VBoxManage createhd --filename "$DST_DIR/$VM_NAME.vdi" --variant Standard --size "$VM_SIZE"
+    ejectAll
+    hdiutil create -size "$VM_SIZE"MB -fs HFS+J -volname "macOS" -type SPARSE "$DST_SPARSE2"
+    if [ "$?" -ne "0" ]; then
+      error "Couldn't create $DST_SPARSE2"
+      exit 95
+    fi
+    MACOS_DEVICE=$(hdiutil attach -nomount "$DST_SPARSE2" 2>&1)
+    if [ "$?" -ne "0" ]; then
+      error "Couldn't mount target disk: $MACOS_DEVICE"
+      exit
+    fi
+    MACOS_DEVICE=$(echo $MACOS_DEVICE|egrep -o '/dev/disk[[:digit:]]{1}' |head -n1)
+    VBoxManage convertfromraw "${MACOS_DEVICE}" "$DST_DIR/$VM_NAME.vdi" --format VDI
+    diskutil eject "${MACOS_DEVICE}"
   else
     result "already exists."
   fi
@@ -305,7 +319,8 @@ createVM() {
     VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type hdd --nonrotational on --medium "$DST_DIR/$VM_NAME.vdi"
     VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --hotpluggable on --medium "$DST_ISO"
     VBoxManage modifyvm "$VM_NAME" --boot1 disk
-    VBoxManage modifyvm "$VM_NAME" --boot2 dvd
+    VBoxManage modifyvm "$VM_NAME" --boot2 disk
+    VBoxManage modifyvm "$VM_NAME" --boot3 dvd
   else
     result "already exists."
   fi
@@ -322,7 +337,7 @@ runVM() {
 }
 
 runClean() {
-  rm -f Clover-v2.4k-4533-X64.iso clover.tar* "$FILE_LOG" "$DST_CLOVER.iso" "$DST_CLOVER.dmg" "$DST_DMG" "$DST_ISO" "$DST_SPARSE" || true
+  rm -f Clover-v2.4k-4533-X64.iso clover.tar* "$FILE_LOG" "$DST_CLOVER.iso" "$DST_CLOVER.dmg" "$DST_DMG" "$DST_ISO" "$DST_SPARSE" "$DST_SPARSE2" || true
 }
 
 waitVM() {

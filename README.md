@@ -24,7 +24,7 @@ The following software is needed.
 
 ## Step by Step Video
  
-Two minute summary video (now an additional step is needed in the installer to initialize the disk first):
+Two minute summary video:
 
 [![Short Summary Video](https://img.youtube.com/vi/WmETOgRuMx4/0.jpg)](https://youtu.be/WmETOgRuMx4)
 
