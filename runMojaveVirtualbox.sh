@@ -258,13 +258,16 @@ patchEFI() {
   # create startup script to boot macOS or the macOS installer
   cat <<EOT > /Volumes/EFI/startup.nsh
 @echo -off
+#fixme startup delay
+set StartupDelay 0
 load "fs0:\EFI\drivers\apfs.efi"
 #fixme bcfg driver add 0 "fs0:\\EFI\\drivers\\apfs.efi" "APFS Filesystem Driver"
 map -r
-echo "Trying to find bootable device..."
-for %p in "macOS Install Data" "macOS Install Data\Locked Files\Boot Files" ".IABootFiles" "OS X Install Data" "Mac OS X Install Data" "System\Library\CoreServices"
-  for %d in fs1 fs2 fs3 fs4 fs5 fs6
+echo "Trying to find a bootable device..."
+for %p in "macOS Install Data" "macOS Install Data\Locked Files\Boot Files" "OS X Install Data" "Mac OS X Install Data" "System\Library\CoreServices" ".IABootFiles"
+  for %d in fs2 fs3 fs4 fs5 fs6 fs1
     if exist "%d:\%p\boot.efi" then
+      echo "Booting: %d:\%p\boot.efi ..." 
       #fixme: bcfg boot add 0 "%d:\\%p\\boot.efi" "macOS"
       "%d:\%p\boot.efi"
     endif
