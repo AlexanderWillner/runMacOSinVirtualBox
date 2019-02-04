@@ -143,7 +143,7 @@ runChecks() {
     read -r
     exit 5
   fi
-  
+
   if ! diskutil listFilesystems | grep -q APFS; then
     error "This host does not support required APFS filesystem. You must upgrade to High Sierra or later and try again."
     exit 11
@@ -194,7 +194,7 @@ createImage() {
 createClover() {
   info "Creating clover image '$DST_CLOVER.iso' (around 30 seconds)..."
   ejectAll
-  
+
   if ! type xz >/dev/null 2>&1; then
     error "'xz' not installed. Trying to install automatically, if you've brew installed..."
     if type brew >/dev/null 2>&1; then
@@ -246,15 +246,15 @@ patchEFI() {
     error "Couldn't mount EFI disk: $EFI_DEVICE"
     exit 92
   fi
-  
+
   EFI_DEVICE=$(echo $EFI_DEVICE|egrep -o '/dev/disk[[:digit:]]{1}' |head -n1)
-  
+
   diskutil mount "${EFI_DEVICE}s1"
-  
+
   # add APFS driver to EFI
   mkdir -p /Volumes/EFI/EFI/drivers >/dev/null 2>&1||true
   cp "$FILE_EFI" /Volumes/EFI/EFI/drivers/
-  
+
   # create startup script to boot macOS or the macOS installer
   cat <<EOT > /Volumes/EFI/startup.nsh
 @echo -off
@@ -267,7 +267,7 @@ echo "Trying to find a bootable device..."
 for %p in "macOS Install Data" "macOS Install Data\Locked Files\Boot Files" "OS X Install Data" "Mac OS X Install Data" "System\Library\CoreServices" ".IABootFiles"
   for %d in fs2 fs3 fs4 fs5 fs6 fs1
     if exist "%d:\%p\boot.efi" then
-      echo "Booting: %d:\%p\boot.efi ..." 
+      echo "Booting: %d:\%p\boot.efi ..."
       #fixme: bcfg boot add 0 "%d:\\%p\\boot.efi" "macOS"
       "%d:\%p\boot.efi"
     endif
@@ -353,7 +353,7 @@ waitVM() {
 }
 
 stopVM() {
-  info "Press enter to stop VM '$VM_NAME' (e.g. after installer restarted)..."
+  info "Press enter to stop the VM and to eject the installer medium (to avoid an installation loop)..."
   result "."
   read
   VBoxManage controlvm "$VM_NAME" poweroff||true
