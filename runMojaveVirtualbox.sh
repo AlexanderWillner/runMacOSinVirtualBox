@@ -252,6 +252,10 @@ patchEFI() {
   diskutil mount "${EFI_DEVICE}s1"
 
   # add APFS driver to EFI
+  if [ -d "/Volumes/EFI/" ]; then
+    error "The folder '/Volumes/EFI/' already exists!"
+    exit 94
+  fi
   mkdir -p /Volumes/EFI/EFI/drivers >/dev/null 2>&1||true
   cp "$FILE_EFI" /Volumes/EFI/EFI/drivers/
 
