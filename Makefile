@@ -13,6 +13,7 @@ help:
 	@echo " * stop     : stop VM"
 	@echo " * wait     : wait for VM to stop"
 	@echo " * eject    : eject installer medium"
+	@echo " * add      : add installer medium"
 	@echo " * clean    : delete generated images and downloaded files"
 	@echo " * stash    : delete generated VM and disk"
 	@echo " * stashvm  : delete generated VM and NOT the disk"
@@ -51,6 +52,9 @@ wait:
 
 eject:
 	@bash  $(SCRIPT) eject
+
+add:
+	@bash  $(SCRIPT) add
 
 clean:
 	@bash  $(SCRIPT) clean

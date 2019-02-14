@@ -42,6 +42,7 @@ readonly FILE_LOG="$HOME/Library/Logs/runMojaveVirtualbox.log"
 ###############################################################################
 
 # Logging #####################################################################
+echo "Logfile: $FILE_LOG"
 exec 3>&1
 exec 4>&2
 exec 1>>"$FILE_LOG"
@@ -323,7 +324,7 @@ createVM() {
     VBoxManage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAHCI --hostiocache on
     VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$DST_DIR/$VM_NAME.efi.vdi"
     VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type hdd --nonrotational on --medium "$DST_DIR/$VM_NAME.vdi"
-    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --hotpluggable on --medium "$DST_ISO"
+    addInstaller
     VBoxManage modifyvm "$VM_NAME" --boot1 disk
     VBoxManage modifyvm "$VM_NAME" --boot2 disk
     VBoxManage modifyvm "$VM_NAME" --boot3 dvd
@@ -363,11 +364,18 @@ stopVM() {
   sleep 5
 }
 
-eject() {
+removeInstaller() {
   info "Ejecting installer DVD for VM '$VM_NAME'..."
   result "."
   # Skip installation DVD to boot from new disk
   VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --medium emptydrive >/dev/null 2>&1||true
+}
+
+addInstaller() {
+  info "Adding installer DVD for VM '$VM_NAME'..."
+  result "."
+  # Skip installation DVD to boot from new disk
+  VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --hotpluggable on --medium "$DST_ISO"
 }
 
 cleanup() {
@@ -405,9 +413,10 @@ main() {
     run) runVM ;;
     wait) waitVM ;;
     stop) stopVM ;;
-    eject) eject ;;
+    eject) removeInstaller ;;
+    add) addInstaller ;;
     all) runChecks && createImage && createVM && patchEFI && runVM && stopVM && eject && runVM ;;
-    *) echo "Possible commands: clean, stash, all, check, installer, clover, patch, vm, run, stop, wait" >&4 ;;
+    *) echo "Possible commands: clean, stash, all, check, installer, clover, patch, vm, run, stop, wait, eject, add" >&4 ;;
     esac
   done
 }
