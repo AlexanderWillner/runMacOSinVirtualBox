@@ -415,7 +415,7 @@ main() {
     stop) stopVM ;;
     eject) removeInstaller ;;
     add) addInstaller ;;
-    all) runChecks && createImage && createVM && patchEFI && runVM && stopVM && eject && runVM ;;
+    all) runChecks && createImage && createVM && patchEFI && runVM && stopVM && removeInstaller && runVM ;;
     *) echo "Possible commands: clean, stash, all, check, installer, clover, patch, vm, run, stop, wait, eject, add" >&4 ;;
     esac
   done
