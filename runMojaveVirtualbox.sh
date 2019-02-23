@@ -175,9 +175,9 @@ createImage() {
     ejectAll
     mkdir -p "$DST_DIR"
     hdiutil create -o "$DST_DMG" -size 10g -layout SPUD -fs HFS+J &&
-      hdiutil attach "$DST_DMG" -mountpoint "$DST_VOL" &&
-      echo sudo "$INST_BIN" --nointeraction --volume "$DST_VOL" --applicationpath "$INST_VER"
-      sudo "$INST_BIN" --nointeraction --volume "$DST_VOL" --applicationpath "$INST_VER"
+    hdiutil attach "$DST_DMG" -mountpoint "$DST_VOL" &&
+    sudo "$INST_BIN" --nointeraction --volume "$DST_VOL" --applicationpath "$INST_VER" ||
+    error "Could create or run installer. Please look in the log file..."
     ejectAll
   else
     result "already exists."
