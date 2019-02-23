@@ -99,6 +99,7 @@ runChecks() {
   if [ "$INST_VERS" = "0" ]; then
     open 'https://beta.apple.com/sp/betaprogram/redemption#macos'
     error "No macOS installer found. Opening the web page for you (press enter in the terminal when done)..."
+    debug "You can also create an installer using the script 'installinstallmacos.py' (use Google)..."
     read -r
     exit 6
   fi
