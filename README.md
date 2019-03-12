@@ -88,18 +88,18 @@ Some available commands:
 
 ## FAQ
 
-* Error Message
-  * Q: I get the error code 2, 3, 4, or 6.
-  * A: You need to have some software components installed on your machine (VirtualBox, VirtualBox Extension Pack, awk). If you've installed http://brew.sh, the script will partly install these automatically. Otherwise, you need to install them manually.
-* Reboot
-  * Q: I see the message ```MACH Reboot```. What should I do?
-  * A: The VM failed to restart. Restart manually.
 * Installation Loop
   * Q: After starting the installation the VM restarts and I see the installer again.
   * A: You've to press enter in the terminal after the installer restarts.
+* Error Message
+  * Q: I get the error code 2, 3, 4, or 6.
+  * A: You need to have some software components installed on your machine (VirtualBox, VirtualBox Extension Pack, awk). If you've installed [Homebrew](https://brew.sh), the script will partly install these automatically. Otherwise, you need to install them manually.
+* Reboot
+  * Q: I see the message ```MACH Reboot```. What should I do?
+  * A: The VM failed to restart. Restart manually. However, this should not happen anymore with the latest version.
 * Kernel Panic
   * Q: I see the message ```Error loading kernel cache (0x9)```. What should I do?
-  * A: This error is shown from time to time. Restart the VM.
+  * A: This error is shown from time to time. Restart the VM. However, this should not happen anymore with the latest version.
 * Black Screen
   * Q: When I then boot I don't see anything, just a black screen. What should I do?
   * A: Change the VM version in the settings from ```Mac OS X (64-bit)``` to ```macOS 10.13 High Sierra (64-bit)```
