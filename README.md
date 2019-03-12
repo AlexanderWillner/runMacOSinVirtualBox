@@ -8,9 +8,9 @@ Simple script to automatically download, install and run macOS 10.14 Mojave (and
 
 ## ToC
 
- * [Quick Guide](#quick-guide)
- * [Step by Step Guide](#step-by-step-guide)
- * [Shell Hacker](#shell-hacker)
+ * [Required Software](#required-software)
+ * [Step by Step Video](#step-by-step-video)
+ * [Step by Step](#step-by-step)
  * [FAQ](#faq)
 
 
