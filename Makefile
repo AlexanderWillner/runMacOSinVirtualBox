@@ -6,8 +6,7 @@ help:
 	@echo " * all      : run everything needed (check, installer, vm, patch, run, stop, eject)"
 	@echo " * check    : check environment"
 	@echo " * installer: create macOS installer image"
-	@echo " * clover   : create clover boot image"
-	@echo " * patch    : add APFS drivers to VM EFI to boot w/o clover"
+	@echo " * patch    : add APFS drivers to VM EFI to boot"
 	@echo " * vm       : create VM and disk"
 	@echo " * run      : run VM"
 	@echo " * stop     : stop VM"
@@ -31,9 +30,6 @@ check:
 
 installer:
 	@bash  $(SCRIPT) installer
-
-clover:
-	@bash  $(SCRIPT) clover
 
 patch:
 	@bash  $(SCRIPT) patch

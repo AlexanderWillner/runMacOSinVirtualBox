@@ -70,8 +70,7 @@ Some available commands:
  * all      : run everything needed (check, installer, vm, patch, run, stop, eject)
  * check    : check environment
  * installer: create macOS installer image
- * clover   : create clover boot image
- * patch    : add APFS drivers to VM EFI to boot w/o clover
+ * patch    : add APFS drivers to VM EFI to boot
  * vm       : create VM and disk
  * run      : run VM
  * stop     : stop VM
