@@ -30,14 +30,11 @@ readonly VM_RAM="${VM_RAM:-4096}"
 readonly VM_VRAM="${VM_VRAM:-128}"
 readonly VM_CPU="${VM_CPU:-2}"
 readonly DST_DMG="$DST_DIR/$VM_NAME.dmg"
-readonly DST_CLOVER="$DST_DIR/${VM_NAME}Clover"
 readonly DST_VOL="/Volumes/$VM_NAME"
 readonly DST_ISO="$DST_DIR/$VM_NAME.iso.cdr"
 readonly DST_SPARSE="$DST_DIR/$VM_NAME.efi.sparseimage"
 readonly DST_SPARSE2="$DST_DIR/$VM_NAME.sparseimage"
 readonly FILE_EFI="/usr/standalone/i386/apfs.efi"
-readonly FILE_CFG="$SCRIPTPATH/config.plist"
-readonly FILE_EFIMOVER="$SCRIPTPATH/moveCloverToEFI.sh"
 readonly FILE_LOG="$HOME/Library/Logs/runMojaveVirtualbox.log"
 ###############################################################################
 
@@ -140,11 +137,6 @@ runChecks() {
     error "Install e.g. via brew cask install virtualbox-extension-pack"
     exit 4
   fi
-  if [ ! -f "$FILE_CFG" ]; then
-    error "'$FILE_CFG' not found. Not checked out? (press enter in the terminal when done)..."
-    read -r
-    exit 5
-  fi
 
   if ! diskutil listFilesystems | grep -q APFS; then
     error "This host does not support required APFS filesystem. You must upgrade to High Sierra or later and try again."
@@ -165,7 +157,6 @@ ejectAll() {
   hdiutil detach "$DST_VOL" 2>/dev/null || true
   hdiutil detach /Volumes/EFI 2>/dev/null || true
   find /Volumes/ -maxdepth 1 -name "NO NAME*" -exec hdiutil detach {} \; 2>/dev/null || true
-  find /Volumes/ -maxdepth 1 -name "Clover-v2.4k-4533-X64*" -exec hdiutil detach {} \; 2>/dev/null || true
 }
 
 createImage() {
@@ -188,45 +179,6 @@ createImage() {
     result "."
     mkdir -p "$DST_DIR"
     hdiutil convert "$DST_DMG" -format UDTO -o "$DST_ISO"
-  else
-    result "already exists."
-  fi
-}
-
-createClover() {
-  info "Creating clover image '$DST_CLOVER.iso' (around 30 seconds)..."
-  ejectAll
-
-  if ! type xz >/dev/null 2>&1; then
-    error "'xz' not installed. Trying to install automatically, if you've brew installed..."
-    if type brew >/dev/null 2>&1; then
-      brew install xz || exit 3
-      brew link xz || exit 3
-    else
-      exit 3
-    fi
-  fi
-
-  if [ ! -e "$DST_CLOVER.iso" ]; then
-    result "."
-    mkdir -p "$DST_DIR"
-    while [ ! -f "Clover-v2.4k-4533-X64.iso" ]; do
-      info " - Downloading Clover (needs Internet access)..." 80
-      curl -Lk https://sourceforge.net/projects/cloverefiboot/files/Bootable_ISO/CloverISO-4533.tar.lzma/download -o clover.tar.lzma
-      xz -d clover.tar.lzma && tar xmf clover.tar
-      sleep 1
-    done
-    hdiutil attach Clover-v2.4k-4533-X64.iso
-    hdiutil create -megabytes 16 -fs MS-DOS -volname MojaveClover -o "$DST_CLOVER.dmg"
-    hdiutil attach "$DST_CLOVER.dmg"
-    cp -r /Volumes/Clover-v2.4k-4533-X64/* /Volumes/NO\ NAME/
-    cp "$FILE_CFG" /Volumes/NO\ NAME/EFI/CLOVER/
-    cp "$FILE_EFI" /Volumes/NO\ NAME/EFI/CLOVER/drivers64UEFI/
-    cp "$FILE_EFIMOVER" /Volumes/NO\ NAME/
-    hdiutil detach /Volumes/Clover-v2.4k-4533-X64/
-    hdiutil detach /Volumes/NO\ NAME/
-    hdiutil makehybrid -iso -joliet -o "$DST_CLOVER.iso" "$DST_CLOVER.dmg"
-    rm -f "$DST_CLOVER.dmg" "$DST_CLOVER.dmg"
   else
     result "already exists."
   fi
@@ -345,7 +297,7 @@ runVM() {
 }
 
 runClean() {
-  rm -f Clover-v2.4k-4533-X64.iso clover.tar* "$FILE_LOG" "$DST_CLOVER.iso" "$DST_CLOVER.dmg" "$DST_DMG" "$DST_ISO" "$DST_SPARSE" "$DST_SPARSE2" || true
+  rm -f "$FILE_LOG" "$DST_DMG" "$DST_ISO" "$DST_SPARSE" "$DST_SPARSE2" || true
 }
 
 waitVM() {
@@ -408,7 +360,6 @@ main() {
     stash) VBoxManage unregistervm --delete "$VM_NAME"||true ;;
     stashvm) VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type dvddrive --medium emptydrive >/dev/null 2>&1||true ; VBoxManage unregistervm --delete "$VM_NAME"||true ;;
     installer) createImage ;;
-    clover) createClover ;;
     patch) patchEFI ;;
     vm) createVM ;;
     run) runVM ;;
@@ -417,7 +368,7 @@ main() {
     eject) removeInstaller ;;
     add) addInstaller ;;
     all) runChecks && createImage && createVM && patchEFI && runVM && stopVM && removeInstaller && runVM ;;
-    *) echo "Possible commands: clean, stash, all, check, installer, clover, patch, vm, run, stop, wait, eject, add" >&4 ;;
+    *) echo "Possible commands: clean, stash, all, check, installer, patch, vm, run, stop, wait, eject, add" >&4 ;;
     esac
   done
 }
