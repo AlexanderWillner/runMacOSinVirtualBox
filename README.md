@@ -91,6 +91,9 @@ Some available commands:
 * Graphic Issues
   * Q: Applications such as Apple Maps do not work as expected.
   * A: There is currently no 3D acceleration, therefore some applications do not work.
+* Recovery
+  * Q: How do I start the recovery mode?
+  * A: Start VM as usual and press ```CMD+C``` then you see ```Trying to find a bootable device...``` then type ```fs4:``` then ```cd TAB``` then ```./boot.efi``` (note that using ```fs4``` might be a different one in your case).
 * Installation Loop
   * Q: After starting the installation the VM restarts and I see the installer again.
   * A: You've to press enter in the terminal after the installer restarts.
