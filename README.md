@@ -88,6 +88,9 @@ Some available commands:
 
 ## FAQ
 
+* Graphic Issues
+  * Q: Applications such as Apple Maps do not work as expected.
+  * A: There is currently no 3D acceleration, therefore some applications do not work.
 * Installation Loop
   * Q: After starting the installation the VM restarts and I see the installer again.
   * A: You've to press enter in the terminal after the installer restarts.
