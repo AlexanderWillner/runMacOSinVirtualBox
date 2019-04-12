@@ -89,6 +89,9 @@ log() {
 runChecks() {
   info "Running checks (around 1 second)..." 0
   result "."
+  if [[ ! $HOME == /Users* ]]; then
+	error "\$HOME should point to the users home directory. See issue #63."
+  fi  
   if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
     info "Opening GUI..." 0
     open "$SCRIPTPATH/ProgressDialog.app"
