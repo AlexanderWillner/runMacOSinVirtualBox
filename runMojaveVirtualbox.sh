@@ -168,6 +168,10 @@ ejectAll() {
   find /Volumes/ -maxdepth 1 -name "Clover-v2.4k-4533-X64*" -exec hdiutil detach {} \; 2>/dev/null || true
 }
 
+attach_and_get_volume() {
+  hdiutil attach "$@" -mountrandom /Volumes | sed $'$!d;s/.*\t//'
+}
+
 createImage() {
   version="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$INST_VER/Contents/Info.plist")"
   info "Creating image '$DST_DMG' (around 20 seconds, version $version, will need sudo)..." 30
@@ -218,13 +222,13 @@ createClover() {
     done
     hdiutil attach Clover-v2.4k-4533-X64.iso
     hdiutil create -megabytes 16 -fs MS-DOS -volname MojaveClover -o "$DST_CLOVER.dmg"
-    hdiutil attach "$DST_CLOVER.dmg"
-    cp -r /Volumes/Clover-v2.4k-4533-X64/* /Volumes/NO\ NAME/
-    cp "$FILE_CFG" /Volumes/NO\ NAME/EFI/CLOVER/
-    cp "$FILE_EFI" /Volumes/NO\ NAME/EFI/CLOVER/drivers64UEFI/
-    cp "$FILE_EFIMOVER" /Volumes/NO\ NAME/
+    VOL=$(attach_and_get_volume "$DST_CLOVER.dmg")
+    cp -r /Volumes/Clover-v2.4k-4533-X64/* "$VOL"
+    cp "$FILE_CFG" "$VOL"/EFI/CLOVER/
+    cp "$FILE_EFI" "$VOL"/EFI/CLOVER/drivers64UEFI/
+    cp "$FILE_EFIMOVER" "$VOL"
     hdiutil detach /Volumes/Clover-v2.4k-4533-X64/
-    hdiutil detach /Volumes/NO\ NAME/
+    hdiutil detach "$VOL"
     hdiutil makehybrid -iso -joliet -o "$DST_CLOVER.iso" "$DST_CLOVER.dmg"
     rm -f "$DST_CLOVER.dmg" "$DST_CLOVER.dmg"
   else
