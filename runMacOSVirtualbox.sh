@@ -35,7 +35,7 @@ readonly DST_ISO="$DST_DIR/$VM_NAME.iso.cdr"
 readonly DST_SPARSE="$DST_DIR/$VM_NAME.efi.sparseimage"
 readonly DST_SPARSE2="$DST_DIR/$VM_NAME.sparseimage"
 readonly FILE_EFI="/usr/standalone/i386/apfs.efi"
-readonly FILE_LOG="$HOME/Library/Logs/macOSVirtualbox.log"
+readonly FILE_LOG="$HOME/Library/Logs/runMacOSVirtualbox.log"
 ###############################################################################
 
 # Logging #####################################################################
