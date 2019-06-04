@@ -2,7 +2,7 @@
 #
 # DESCRIPTION
 #
-# Run macOS 10.14 Mojave in Virtualbox.
+# Run macOS Catalina and older versions in Virtualbox.
 #
 # CREDITS
 #
@@ -17,11 +17,11 @@ readonly SCRIPTPATH="$(
   cd "$(dirname "$0")" || exit
   pwd -P
 )"
-readonly INST_VERS="$(find /Applications -maxdepth 1 -type d -name 'Install macOS Mojave*' | wc -l | tr -d '[:space:]')"
-readonly INST_VER="$(find /Applications -maxdepth 1 -type d -name 'Install macOS Mojave*' -print -quit)"
+readonly INST_VERS="$(find /Applications -maxdepth 1 -type d -name 'Install macOS *' | wc -l | tr -d '[:space:]')"
+readonly INST_VER="$(find /Applications -maxdepth 1 -type d -name 'Install macOS *' -print -quit)"
 readonly INST_BIN="$INST_VER/Contents/Resources/createinstallmedia"
 readonly DST_DIR="${DST_DIR:-$HOME/VirtualBox VMs}"
-readonly VM_NAME="${VM_NAME:-macOS-Mojave}"
+readonly VM_NAME="${VM_NAME:-macOS-VM}"
 readonly VM_DIR="${VM_DIR:-$DST_DIR/$VM_NAME}"
 readonly VM_SIZE="${VM_SIZE:-32768}"
 readonly VM_RES="${VM_RES:-1680x1050}"
@@ -35,7 +35,7 @@ readonly DST_ISO="$DST_DIR/$VM_NAME.iso.cdr"
 readonly DST_SPARSE="$DST_DIR/$VM_NAME.efi.sparseimage"
 readonly DST_SPARSE2="$DST_DIR/$VM_NAME.sparseimage"
 readonly FILE_EFI="/usr/standalone/i386/apfs.efi"
-readonly FILE_LOG="$HOME/Library/Logs/runMojaveVirtualbox.log"
+readonly FILE_LOG="$HOME/Library/Logs/macOSVirtualbox.log"
 ###############################################################################
 
 # Logging #####################################################################
@@ -57,7 +57,7 @@ error() {
   log "$1"
   if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
     osascript -e 'tell application "'"$SCRIPTPATH/ProgressDialog.app"'"' -e 'activate' \
-      -e 'set name of window 1 to "Installing macOS Mojave on Virtualbox"' \
+      -e 'set name of window 1 to "Installing macOS in Virtualbox"' \
       -e 'set message of window 1 to "'"ERROR: $1"'."' \
       -e 'set percent of window 1 to (100)' \
       -e 'end tell'
@@ -69,7 +69,7 @@ info() {
   log "$1"
   if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
     osascript -e 'tell application "'"$SCRIPTPATH/ProgressDialog.app"'"' -e 'activate' \
-      -e 'set name of window 1 to "Installing macOS Mojave on Virtualbox"' \
+      -e 'set name of window 1 to "Installing macOS in Virtualbox"' \
       -e 'set message of window 1 to "'"$1"'...'"$2"'%."' \
       -e 'set percent of window 1 to ('"$2"')' \
       -e 'end tell'
