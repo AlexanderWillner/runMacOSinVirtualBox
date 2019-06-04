@@ -1,4 +1,4 @@
-SCRIPT=./runMojaveVirtualbox.sh
+SCRIPT=./runMacOSVirtualbox.sh
 SHELL=bash
 
 help:
@@ -6,8 +6,7 @@ help:
 	@echo " * all      : run everything needed (check, installer, vm, patch, run, stop, eject)"
 	@echo " * check    : check environment"
 	@echo " * installer: create macOS installer image"
-	@echo " * clover   : create clover boot image"
-	@echo " * patch    : add APFS drivers to VM EFI to boot w/o clover"
+	@echo " * patch    : add APFS drivers to VM EFI to boot"
 	@echo " * vm       : create VM and disk"
 	@echo " * run      : run VM"
 	@echo " * stop     : stop VM"
@@ -31,9 +30,6 @@ check:
 
 installer:
 	@bash  $(SCRIPT) installer
-
-clover:
-	@bash  $(SCRIPT) clover
 
 patch:
 	@bash  $(SCRIPT) patch
@@ -72,10 +68,10 @@ test: dependencies
 	@echo "Running first round of shell checks..."
 	@shellcheck -x *.sh
 	@echo "Running second round of shell checks..."
-	@shellharden --check runMojaveVirtualbox.sh
+	@shellharden --check runMacOSVirtualbox.sh
 
 harden: dependencies
-	@shellharden --replace runMojaveVirtualbox.sh
+	@shellharden --replace runMacOSVirtualbox.sh
 	
 style: dependencies
 	@shfmt -i 2 -w -s *.sh
@@ -86,9 +82,9 @@ dependencies:
 	@type shfmt >/dev/null 2>&1 || (echo "Run 'brew install shfmt' first." >&2 ; exit 1)
 
 release:
-	@cp runMojaveVirtualbox.sh app/RunMojaveVirtualbox.app/Contents/Resources/
-	@cd app; rm -f RunMojaveVirtualbox.app.zip || true
-	@cd app; zip -r RunMojaveVirtualbox.app.zip RunMojaveVirtualbox.app/
+	@cp runMacOSVirtualbox.sh app/runMacOSVirtualbox.app/Contents/Resources/
+	@cd app; rm -f runMacOSVirtualbox.app.zip || true
+	@cd app; zip -r runMacOSVirtualbox.app.zip runMacOSVirtualbox.app/
 	@open app
 	@open https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases
 

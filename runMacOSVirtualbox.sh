@@ -2,7 +2,7 @@
 #
 # DESCRIPTION
 #
-# Run macOS 10.14 Mojave in Virtualbox.
+# Run macOS Catalina and older versions in Virtualbox.
 #
 # CREDITS
 #
@@ -17,28 +17,29 @@ readonly SCRIPTPATH="$(
   cd "$(dirname "$0")" || exit
   pwd -P
 )"
-readonly INST_VERS="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' | wc -l | tr -d '[:space:]')"
-readonly INST_VER="$(find /Applications -maxdepth 1 -type d -name 'Install macOS*' -print -quit)"
+readonly INST_VERS="$(find /Applications -maxdepth 1 -type d -name 'Install macOS *' | wc -l | tr -d '[:space:]')"
+readonly INST_VER="$(find /Applications -maxdepth 1 -type d -name 'Install macOS *' -print -quit)"
 readonly INST_BIN="$INST_VER/Contents/Resources/createinstallmedia"
 readonly DST_DIR="${DST_DIR:-$HOME/VirtualBox VMs}"
-readonly VM_NAME="${VM_NAME:-macOS-Mojave}"
+readonly VM_NAME="${VM_NAME:-macOS-VM}"
 readonly VM_DIR="${VM_DIR:-$DST_DIR/$VM_NAME}"
 readonly VM_SIZE="${VM_SIZE:-32768}"
 readonly VM_RES="${VM_RES:-1680x1050}"
+readonly VM_SCALE="${VM_SCALE:-1.0}"
 readonly VM_RAM="${VM_RAM:-4096}"
 readonly VM_VRAM="${VM_VRAM:-128}"
 readonly VM_CPU="${VM_CPU:-2}"
 readonly DST_DMG="$DST_DIR/$VM_NAME.dmg"
-readonly DST_CLOVER="$DST_DIR/${VM_NAME}Clover"
 readonly DST_VOL="/Volumes/$VM_NAME"
 readonly DST_ISO="$DST_DIR/$VM_NAME.iso.cdr"
-readonly FILE_EFI="/tmp/apfs.efi"
-readonly FILE_CFG="$SCRIPTPATH/config.plist"
-readonly FILE_EFIMOVER="$SCRIPTPATH/moveCloverToEFI.sh"
-readonly FILE_LOG="$HOME/Library/Logs/runMojaveVirtualbox.log"
+readonly DST_SPARSE="$DST_DIR/$VM_NAME.efi.sparseimage"
+readonly DST_SPARSE2="$DST_DIR/$VM_NAME.sparseimage"
+readonly FILE_EFI="/usr/standalone/i386/apfs.efi"
+readonly FILE_LOG="$HOME/Library/Logs/runMacOSVirtualbox.log"
 ###############################################################################
 
 # Logging #####################################################################
+echo "Logfile: $FILE_LOG"
 exec 3>&1
 exec 4>&2
 exec 1>>"$FILE_LOG"
@@ -56,7 +57,7 @@ error() {
   log "$1"
   if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
     osascript -e 'tell application "'"$SCRIPTPATH/ProgressDialog.app"'"' -e 'activate' \
-      -e 'set name of window 1 to "Installing macOS Mojave on Virtualbox"' \
+      -e 'set name of window 1 to "Installing macOS in Virtualbox"' \
       -e 'set message of window 1 to "'"ERROR: $1"'."' \
       -e 'set percent of window 1 to (100)' \
       -e 'end tell'
@@ -68,7 +69,7 @@ info() {
   log "$1"
   if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
     osascript -e 'tell application "'"$SCRIPTPATH/ProgressDialog.app"'"' -e 'activate' \
-      -e 'set name of window 1 to "Installing macOS Mojave on Virtualbox"' \
+      -e 'set name of window 1 to "Installing macOS in Virtualbox"' \
       -e 'set message of window 1 to "'"$1"'...'"$2"'%."' \
       -e 'set percent of window 1 to ('"$2"')' \
       -e 'end tell'
@@ -88,6 +89,9 @@ log() {
 runChecks() {
   info "Running checks (around 1 second)..." 0
   result "."
+  if [[ ! $HOME == /Users* ]]; then
+	error "\$HOME should point to the users home directory. See issue #63."
+  fi  
   if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
     info "Opening GUI..." 0
     open "$SCRIPTPATH/ProgressDialog.app"
@@ -95,6 +99,7 @@ runChecks() {
   if [ "$INST_VERS" = "0" ]; then
     open 'https://beta.apple.com/sp/betaprogram/redemption#macos'
     error "No macOS installer found. Opening the web page for you (press enter in the terminal when done)..."
+    debug "You can also create an installer using the script 'installinstallmacos.py' (use Google)..."
     read -r
     exit 6
   fi
@@ -121,15 +126,6 @@ runChecks() {
       exit 2
     fi
   fi
-  if ! type xz >/dev/null 2>&1; then
-    error "'xz' not installed. Trying to install automatically, if you've brew installed..."
-    if type brew >/dev/null 2>&1; then
-      brew install xz || exit 3
-      brew link xz || exit 3
-    else
-      exit 3
-    fi
-  fi
   awk >/dev/null 2>&1
   if [ ! $? -eq 1 ]; then
     error "Something is wrong with your 'awk' installation. Trying to fix it automatically, if you've brew installed..."
@@ -140,17 +136,14 @@ runChecks() {
     fi
   fi
   if [ "$(VBoxManage list extpacks | grep 'USB 3.0')" = "" ]; then
-    error "VirtualBox USB 3.0 Extension Pack not installed. Trying to install automatically, if you've brew installed..."
-    if type brew >/dev/null 2>&1; then
-      brew cask install virtualbox-extension-pack || exit 4
-    else
-      exit 4
-    fi
+    error "VirtualBox USB 3.0 Extension Pack not installed. Will not install it automatically, due to licensing issues!"
+    error "Install e.g. via brew cask install virtualbox-extension-pack"
+    exit 4
   fi
-  if [ ! -f "$FILE_CFG" ]; then
-    error "'$FILE_CFG' not found. Not checked out? (press enter in the terminal when done)..."
-    read -r
-    exit 5
+
+  if ! diskutil listFilesystems | grep -q APFS; then
+    error "This host does not support required APFS filesystem. You must upgrade to High Sierra or later and try again."
+    exit 11
   fi
 }
 
@@ -165,6 +158,8 @@ ejectAll() {
     hdiutil detach "$i" 2>/dev/null || true
   done
   hdiutil detach "$DST_VOL" 2>/dev/null || true
+  hdiutil detach /Volumes/EFI 2>/dev/null || true
+  find /Volumes/ -maxdepth 1 -name "NO NAME*" -exec hdiutil detach {} \; 2>/dev/null || true
 }
 
 createImage() {
@@ -175,9 +170,9 @@ createImage() {
     ejectAll
     mkdir -p "$DST_DIR"
     hdiutil create -o "$DST_DMG" -size 10g -layout SPUD -fs HFS+J &&
-      hdiutil attach "$DST_DMG" -mountpoint "$DST_VOL" &&
-      echo sudo "$INST_BIN" --nointeraction --volume "$DST_VOL" --applicationpath "$INST_VER"
-      sudo "$INST_BIN" --nointeraction --volume "$DST_VOL" --applicationpath "$INST_VER"
+    hdiutil attach "$DST_DMG" -mountpoint "$DST_VOL" &&
+    sudo "$INST_BIN" --nointeraction --volume "$DST_VOL" --applicationpath "$INST_VER" ||
+    error "Could create or run installer. Please look in the log file..."
     ejectAll
   else
     result "already exists."
@@ -192,59 +187,87 @@ createImage() {
   fi
 }
 
-extractAPFS() {
-  info " - Extracting APFS EFI driver (around 10 seconds)..." 60
-  if [ ! -e "$FILE_EFI" ]; then
-    result "."
-    ejectAll
-    hdiutil attach "$INST_VER/Contents/SharedSupport/BaseSystem.dmg" &&
-      cp /Volumes/OS\ X\ Base\ System/usr/standalone/i386/apfs.efi "$FILE_EFI"
-    ejectAll
-  else
-    result "already exists."
-  fi
-}
+patchEFI() {
+  info "Adding APFS drivers to EFI in '$DST_DIR/$VM_NAME.efi.vdi' (around 5 seconds)..."
+  result "."
 
-createClover() {
-  info "Creating clover image '$DST_CLOVER.iso' (around 30 seconds)..."
-  if [ ! -e "$DST_CLOVER.iso" ]; then
-    result "."
-    mkdir -p "$DST_DIR"
-    extractAPFS
-    while [ ! -f "Clover-v2.4k-4533-X64.iso" ]; do
-      info " - Downloading Clover (needs Internet access)..." 80
-      curl -Lk https://sourceforge.net/projects/cloverefiboot/files/Bootable_ISO/CloverISO-4533.tar.lzma/download -o clover.tar.lzma
-      xz -d clover.tar.lzma && tar xf clover.tar
-      sleep 1
-    done
-    hdiutil detach /Volumes/Clover-v2.4k-4533-X64/ 2>/dev/null || true
-    hdiutil attach Clover-v2.4k-4533-X64.iso
-    hdiutil create -megabytes 16 -fs MS-DOS -volname MojaveClover -o "$DST_CLOVER.dmg"
-    hdiutil detach /Volumes/NO\ NAME/ 2>/dev/null || true
-    hdiutil attach "$DST_CLOVER.dmg"
-    cp -r /Volumes/Clover-v2.4k-4533-X64/* /Volumes/NO\ NAME/
-    cp "$FILE_CFG" /Volumes/NO\ NAME/EFI/CLOVER/
-    cp "$FILE_EFI" /Volumes/NO\ NAME/EFI/CLOVER/drivers64UEFI/
-    cp "$FILE_EFIMOVER" /Volumes/NO\ NAME/
-    hdiutil detach /Volumes/Clover-v2.4k-4533-X64/
-    hdiutil detach /Volumes/NO\ NAME/
-    hdiutil makehybrid -iso -joliet -o "$DST_CLOVER.iso" "$DST_CLOVER.dmg"
-    rm -f "$DST_CLOVER.dmg" "$DST_CLOVER.dmg"
-  else
-    result "already exists."
+  ejectAll
+
+  if [ ! -f "$DST_SPARSE" ]; then
+    hdiutil create -size 1m -fs MS-DOS -volname "EFI" "$DST_SPARSE"
   fi
+
+  EFI_DEVICE=$(hdiutil attach -nomount "$DST_SPARSE" 2>&1)
+  result="$?"
+  if [ "$result" -ne "0" ]; then
+    error "Couldn't mount EFI disk: $EFI_DEVICE"
+    exit 92
+  fi
+
+  EFI_DEVICE=$(echo $EFI_DEVICE|egrep -o '/dev/disk[[:digit:]]{1}' |head -n1)
+
+  # add APFS driver to EFI
+  if [ -d "/Volumes/EFI/" ]; then
+    error "The folder '/Volumes/EFI/' already exists!"
+    exit 94
+  fi
+  diskutil mount "${EFI_DEVICE}s1"
+  mkdir -p /Volumes/EFI/EFI/drivers >/dev/null 2>&1||true
+  cp "$FILE_EFI" /Volumes/EFI/EFI/drivers/
+
+  # create startup script to boot macOS or the macOS installer
+  cat <<EOT > /Volumes/EFI/startup.nsh
+@echo -off
+#fixme startup delay
+set StartupDelay 0
+load "fs0:\EFI\drivers\apfs.efi"
+#fixme bcfg driver add 0 "fs0:\\EFI\\drivers\\apfs.efi" "APFS Filesystem Driver"
+map -r
+echo "Trying to find a bootable device..."
+for %p in "macOS Install Data" "macOS Install Data\Locked Files\Boot Files" "OS X Install Data" "Mac OS X Install Data" "System\Library\CoreServices" ".IABootFiles"
+  for %d in fs2 fs3 fs4 fs5 fs6 fs1
+    if exist "%d:\%p\boot.efi" then
+      echo "Booting: %d:\%p\boot.efi ..."
+      #fixme: bcfg boot add 0 "%d:\\%p\\boot.efi" "macOS"
+      "%d:\%p\boot.efi"
+    endif
+  endfor
+endfor
+echo "Failed."
+EOT
+
+  # close disk again
+  diskutil unmount "${EFI_DEVICE}s1"
+  VBoxManage convertfromraw "${EFI_DEVICE}" "$DST_DIR/$VM_NAME.efi.vdi" --format VDI
+  diskutil eject "${EFI_DEVICE}"
 }
 
 createVM() {
   if [ ! -e "$VM_DIR" ]; then
     mkdir -p "$VM_DIR"
   fi
-  info "Creating VM HDD '$VM_DIR/$VM_NAME.vdi' (around 5 seconds)..." 90
-  if [ ! -e "$VM_DIR/$VM_NAME.vdi" ]; then
+  info "Creating VM HDD '$DST_DIR/$VM_NAME.vdi' (around 1 minute)..." 90
+  if [ ! -e "$DST_DIR/$VM_NAME.vdi" ]; then
     result "."
-    VBoxManage createhd --filename "$VM_DIR/$VM_NAME.vdi" --variant Standard --size "$VM_SIZE"
+    ejectAll
+    hdiutil create -size "$VM_SIZE"MB -fs HFS+J -volname "macOS" -type SPARSE "$DST_SPARSE2"
+    if [ "$?" -ne "0" ]; then
+      error "Couldn't create $DST_SPARSE2"
+      exit 95
+    fi
+    MACOS_DEVICE=$(hdiutil attach -nomount "$DST_SPARSE2" 2>&1)
+    if [ "$?" -ne "0" ]; then
+      error "Couldn't mount target disk: $MACOS_DEVICE"
+      exit
+    fi
+    MACOS_DEVICE=$(echo $MACOS_DEVICE|egrep -o '/dev/disk[[:digit:]]{1}' |head -n1)
+    VBoxManage convertfromraw "${MACOS_DEVICE}" "$DST_DIR/$VM_NAME.vdi" --format VDI
+    diskutil eject "${MACOS_DEVICE}"
   else
     result "already exists."
+  fi
+  if [ ! -e "$DST_DIR/$VM_NAME.efi.vdi" ]; then
+    patchEFI
   fi
   info "Creating VM '$VM_NAME' (around 2 seconds)..." 99
   if ! VBoxManage showvminfo "$VM_NAME" >/dev/null 2>&1; then
@@ -253,10 +276,14 @@ createVM() {
     VBoxManage modifyvm "$VM_NAME" --usbxhci on --memory "$VM_RAM" --vram "$VM_VRAM" --cpus "$VM_CPU" --firmware efi --chipset ich9 --mouse usbtablet --keyboard usb
     VBoxManage setextradata "$VM_NAME" "CustomVideoMode1" "${VM_RES}x32"
     VBoxManage setextradata "$VM_NAME" VBoxInternal2/EfiGraphicsResolution "$VM_RES"
+    VBoxManage setextradata "$VM_NAME" GUI/ScaleFactor "$VM_SCALE"
     VBoxManage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAHCI --hostiocache on
-    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$VM_DIR/$VM_NAME.vdi"
-    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type dvddrive --medium "$DST_CLOVER.iso"
-    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --medium "$DST_ISO"
+    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$DST_DIR/$VM_NAME.efi.vdi"
+    VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type hdd --nonrotational on --medium "$DST_DIR/$VM_NAME.vdi"
+    addInstaller
+    VBoxManage modifyvm "$VM_NAME" --boot1 disk
+    VBoxManage modifyvm "$VM_NAME" --boot2 disk
+    VBoxManage modifyvm "$VM_NAME" --boot3 dvd
   else
     result "already exists."
   fi
@@ -264,21 +291,47 @@ createVM() {
 
 runVM() {
   info "Starting VM '$VM_NAME' (3 minutes in the VM)..." 100
-  if ! VBoxManage showvminfo 'macOS-Mojave' | grep "State:" | grep -i running >/dev/null; then
+  if ! VBoxManage showvminfo "$VM_NAME" | grep "State:" | grep -i running >/dev/null; then
     result "."
     VBoxManage startvm "$VM_NAME" --type gui
-    echo "Next steps:"
-    echo "  1. Disk Utility: erase the virtual drive using APFS and call it 'Mojave' (it will be converted otherwise)"
-    echo "  2. Install macOS: on the erased virtual drive 'Mojave' (around 4 minutes)"
-    echo "  3. After the reboot: switch off the VM, remove the virtual macOS installer CD-ROM and restart"
-    echo "  4. Start macOS in the Clover boot menu (the initial installation might take a few hours)"
   else
     result "already running."
   fi
 }
 
 runClean() {
-  rm -f Clover-v2.4k-4533-X64.iso clover.tar* "$FILE_LOG" "$DST_CLOVER.iso" "$DST_CLOVER.dmg" "$DST_DMG" "$DST_ISO" "$FILE_EFI" || true
+  rm -f "$FILE_LOG" "$DST_DMG" "$DST_ISO" "$DST_SPARSE" "$DST_SPARSE2" || true
+}
+
+waitVM() {
+  info "Waiting for VM '$VM_NAME' to shutdown..."
+  result "."
+  while VBoxManage showvminfo "$VM_NAME"|grep -E "State:.*running" >/dev/null; do
+     sleep 5
+  done
+  true
+}
+
+stopVM() {
+  info "Press enter to stop the VM and to eject the installer medium (to avoid an installation loop)..."
+  result "."
+  read
+  VBoxManage controlvm "$VM_NAME" poweroff||true
+  sleep 5
+}
+
+removeInstaller() {
+  info "Ejecting installer DVD for VM '$VM_NAME'..."
+  result "."
+  # Skip installation DVD to boot from new disk
+  VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --medium emptydrive >/dev/null 2>&1||true
+}
+
+addInstaller() {
+  info "Adding installer DVD for VM '$VM_NAME'..."
+  result "."
+  # Skip installation DVD to boot from new disk
+  VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --hotpluggable on --medium "$DST_ISO"
 }
 
 cleanup() {
@@ -307,13 +360,18 @@ main() {
     case "$ARG" in
     check) runChecks ;;
     clean) runClean ;;
-    stash) VBoxManage unregistervm --delete "$VM_NAME" || true ;;
+    stash) VBoxManage unregistervm --delete "$VM_NAME"||true ;;
+    stashvm) VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type dvddrive --medium emptydrive >/dev/null 2>&1||true ; VBoxManage unregistervm --delete "$VM_NAME"||true ;;
     installer) createImage ;;
-    clover) createClover ;;
+    patch) patchEFI ;;
     vm) createVM ;;
     run) runVM ;;
-    all) runChecks && createImage && createClover && createVM && runVM ;;
-    *) echo "Possible commands: clean, stash, all, check, installer, clover, vm, run" >&4 ;;
+    wait) waitVM ;;
+    stop) stopVM ;;
+    eject) removeInstaller ;;
+    add) addInstaller ;;
+    all) runChecks && createImage && createVM && patchEFI && runVM && stopVM && removeInstaller && runVM ;;
+    *) echo "Possible commands: clean, stash, all, check, installer, patch, vm, run, stop, wait, eject, add" >&4 ;;
     esac
   done
 }
