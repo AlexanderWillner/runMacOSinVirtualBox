@@ -1,16 +1,16 @@
-# Run macOS 10.14 Mojave (and other versions) in VirtualBox on macOS
+# Run macOS 10.15 Catalina (and other versions) in VirtualBox on macOS
 
 ## Overview
 
-Simple script to automatically download, install and run macOS 10.14 Mojave (and other versions) in VirtualBox on macOS. Since VirtualBox does not support booting from APFS volumes, this script is copying the APFS EFI drivers automatically.
+Simple script to automatically download, install and run macOS 10.15 Catalina (and other versions) in VirtualBox on macOS. Since VirtualBox does not support booting from APFS volumes, this script is copying the APFS EFI drivers automatically.
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/722e2f9736844387b611945fb430d195)](https://app.codacy.com/app/AlexanderWillner/runMacOSinVirtualBox?utm_source=github.com&utm_medium=referral&utm_content=AlexanderWillner/runMacOSinVirtualBox&utm_campaign=Badge_Grade_Dashboard)
 
 ## ToC
 
- * [Quick Guide](#quick-guide)
- * [Step by Step Guide](#step-by-step-guide)
- * [Shell Hacker](#shell-hacker)
+ * [Required Software](#required-software)
+ * [Step by Step Video](#step-by-step-video)
+ * [Step by Step](#step-by-step)
  * [FAQ](#faq)
 
 
@@ -35,16 +35,16 @@ Execute ```make all``` to setup and run everything. After the installer reboots,
 ```
 $ make all
 Running checks (around 1 second)....
-Creating image '/Users/awi/VirtualBox VMs/macOS-Mojave.dmg' (around 20 seconds, version 14.2.2, will need sudo)....
-Creating iso '/Users/awi/VirtualBox VMs/macOS-Mojave.iso.cdr' (around 25 seconds)....
-Creating VM HDD '/Users/awi/VirtualBox VMs/macOS-Mojave/macOS-Mojave.vdi' (around 5 seconds)....
-Creating VM 'macOS-Mojave' (around 2 seconds)....
-Adding APFS drivers to EFI in '/Users/awi/VirtualBox VMs/macOS-Mojave/macOS-Mojave.vdi' (around 5 seconds)....
-Starting VM 'macOS-Mojave' (3 minutes in the VM)....
-Press enter to stop VM 'macOS-Mojave' (e.g. after installer restarted)....
+Creating image '/Users/awi/VirtualBox VMs/macOS-VM.dmg' (around 20 seconds, version 14.2.2, will need sudo)....
+Creating iso '/Users/awi/VirtualBox VMs/macOS-VM.iso.cdr' (around 25 seconds)....
+Creating VM HDD '/Users/awi/VirtualBox VMs/macOS-VM/macOS-VM.vdi' (around 5 seconds)....
+Creating VM 'macOS-VM' (around 2 seconds)....
+Adding APFS drivers to EFI in '/Users/awi/VirtualBox VMs/macOS-VM/macOS-VM.vdi' (around 5 seconds)....
+Starting VM 'macOS-VM' (3 minutes in the VM)....
+Press enter to stop VM 'macOS-VM' (e.g. after installer restarted)....
 
-Ejecting installer DVD for VM 'macOS-Mojave'....
-Starting VM 'macOS-Mojave' (3 minutes in the VM)....
+Ejecting installer DVD for VM 'macOS-VM'....
+Starting VM 'macOS-VM' (3 minutes in the VM)....
 ```
 
 ### Customizing your build
@@ -53,7 +53,7 @@ Additionally the following parameters can be customized with environment variabl
 
 | variable name | description                                         | default value                |
 |---------------|-----------------------------------------------------|------------------------------|
-| VM_NAME       | name of the virtual machine                         | macOS-Mojave                 |
+| VM_NAME       | name of the virtual machine                         | macOS-VM                 |
 | VM_DIR        | directory, where the virtual machine will be stored | HOME/VirtualBox VMs/$VM_NAME |
 | VM_SIZE       | the size of the hard disk                           | 32768                        |
 | VM_RES        | monitor resolution                                  | 1680x1050                    |
@@ -70,8 +70,7 @@ Some available commands:
  * all      : run everything needed (check, installer, vm, patch, run, stop, eject)
  * check    : check environment
  * installer: create macOS installer image
- * clover   : create clover boot image
- * patch    : add APFS drivers to VM EFI to boot w/o clover
+ * patch    : add APFS drivers to VM EFI to boot
  * vm       : create VM and disk
  * run      : run VM
  * stop     : stop VM
@@ -88,18 +87,24 @@ Some available commands:
 
 ## FAQ
 
-* Error Message
-  * Q: I get the error code 2, 3, 4, or 6.
-  * A: You need to have some software components installed on your machine (VirtualBox, VirtualBox Extension Pack, awk). If you've installed http://brew.sh, the script will partly install these automatically. Otherwise, you need to install them manually.
-* Reboot
-  * Q: I see the message ```MACH Reboot```. What should I do?
-  * A: The VM failed to restart. Restart manually.
+* Graphic Issues
+  * Q: Applications such as Apple Maps do not work as expected.
+  * A: There is currently no 3D acceleration, therefore some applications do not work.
+* Recovery
+  * Q: How do I start the recovery mode?
+  * A: Start VM as usual and press ```CMD+C``` then you see ```Trying to find a bootable device...``` then type ```fs4:``` then ```cd TAB``` then ```./boot.efi``` (note that using ```fs4``` might be a different one in your case).
 * Installation Loop
   * Q: After starting the installation the VM restarts and I see the installer again.
   * A: You've to press enter in the terminal after the installer restarts.
+* Error Message
+  * Q: I get the error code 2, 3, 4, or 6.
+  * A: You need to have some software components installed on your machine (VirtualBox, VirtualBox Extension Pack, awk). If you've installed [Homebrew](https://brew.sh), the script will partly install these automatically. Otherwise, you need to install them manually.
+* Reboot
+  * Q: I see the message ```MACH Reboot```. What should I do?
+  * A: The VM failed to restart. Restart manually. However, this should not happen anymore with the latest version.
 * Kernel Panic
   * Q: I see the message ```Error loading kernel cache (0x9)```. What should I do?
-  * A: This error is shown from time to time. Restart the VM.
+  * A: This error is shown from time to time. Restart the VM. However, this should not happen anymore with the latest version.
 * Black Screen
   * Q: When I then boot I don't see anything, just a black screen. What should I do?
   * A: Change the VM version in the settings from ```Mac OS X (64-bit)``` to ```macOS 10.13 High Sierra (64-bit)```
