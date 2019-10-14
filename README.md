@@ -92,7 +92,7 @@ Some available commands:
   * A: There is currently no 3D acceleration, therefore some applications do not work.
 * Recovery
   * Q: How do I start the recovery mode?
-  * A: Start VM as usual and press ```CMD+C``` then you see ```Trying to find a bootable device...``` then type ```fs4:``` then ```cd TAB``` then ```./boot.efi``` (note that using ```fs4``` might be a different one in your case).
+  * A: Start the VM as usual and be ready to press ```CMD+C``` when you see ```Trying to find a bootable device...``` to interrupt the regular boot process. At the following EFI shell prompt try to find the relevant volume holding ```boot.efi``` in a single randomly-named sub-directory of the root directory. So try to enter ```fs4:``` (or ```fs5:```, ```fs6:```, etc.), then enter ```cd TAB``` (where ```TAB``` is used to auto-complete the randomly-named sub-dir), then start Recovery by entering ```boot.efi```.
 * Installation Loop
   * Q: After starting the installation the VM restarts and I see the installer again.
   * A: You've to press enter in the terminal after the installer restarts.
