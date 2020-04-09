@@ -97,9 +97,7 @@ runChecks() {
     open "$SCRIPTPATH/ProgressDialog.app"
   fi
   if [ "$INST_VERS" = "0" ]; then
-    open 'https://beta.apple.com/sp/betaprogram/redemption#macos'
-    error "No macOS installer found. Opening the web page for you (press enter in the terminal when done)..."
-    debug "You can also create an installer using the script 'installinstallmacos.py' (use Google)..."
+    error "No macOS installer found. Download the installer first (e.g. via 'installinstallmacos.py') - press enter in the terminal when done..."
     read -r
     exit 6
   fi
@@ -108,9 +106,7 @@ runChecks() {
     exit 7
   fi
   if [ ! -d "$INST_VER/Contents/SharedSupport/" ]; then
-    open 'https://beta.apple.com/sp/betaprogram/redemption#macos'
-    error "Seems you've downloaded the macOS Stub Installer. Please download the full installer (google the issue)."
-    debug "Follow Step 2 (Download the macOS Public Beta Access Utility). Opening the web page for you (press enter in the terminal when done)..."
+    error "Partial macOS installer found. Download the full installer first (e.g. via 'installinstallmacos.py') - press enter in the terminal when done..."
     read -r
     exit 8
   fi
