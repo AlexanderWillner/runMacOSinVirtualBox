@@ -4,7 +4,7 @@
 
 Simple script to automatically download, install and run macOS 10.15 Catalina (and other versions) in VirtualBox on macOS. Since VirtualBox does not support booting from APFS volumes, this script is copying the APFS EFI drivers automatically.
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/722e2f9736844387b611945fb430d195)](https://app.codacy.com/app/AlexanderWillner/runMacOSinVirtualBox?utm_source=github.com&utm_medium=referral&utm_content=AlexanderWillner/runMacOSinVirtualBox&utm_campaign=Badge_Grade_Dashboard)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/722e2f9736844387b611945fb430d195)](https://app.codacy.com/app/AlexanderWillner/runMacOSinVirtualBox?utm_source=github.com&utm_medium=referral&utm_content=AlexanderWillner/runMacOSinVirtualBox&utm_campaign=Badge_Grade_Dashboard) [![download](https://img.shields.io/github/downloads/AlexanderWillner/runMacOSinVirtualBox/total)](https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases)
 
 ## ToC
 
@@ -96,6 +96,9 @@ Some available commands:
 * Installation Loop
   * Q: After starting the installation the VM restarts and I see the installer again.
   * A: You've to press enter in the terminal after the installer restarts.
+* Installation Not Starting
+  * Q: I've pressed ```Continue``` to start the installation and nothing happens for minutes.
+  * A: Your macOS installer might be incomplete or corrupted, please download it again from Apple.
 * Error Message
   * Q: I get the error code 2, 3, 4, or 6.
   * A: You need to have some software components installed on your machine (VirtualBox, VirtualBox Extension Pack, awk). If you've installed [Homebrew](https://brew.sh), the script will partly install these automatically. Otherwise, you need to install them manually.
@@ -108,6 +111,9 @@ Some available commands:
 * Black Screen
   * Q: When I then boot I don't see anything, just a black screen. What should I do?
   * A: Change the VM version in the settings from ```Mac OS X (64-bit)``` to ```macOS 10.13 High Sierra (64-bit)```
+* Slow
+  * Q: Why is the VM so slow?
+  * A: Maybe [#71](https://github.com/AlexanderWillner/runMacOSinVirtualBox/issues/71) provides some insights. 
 * Other Issue
   * Q: Something is not working. What should I do?
   * A: [Create a ticket](https://github.com/AlexanderWillner/runMacOSinVirtualBox/issues/new?template=bug_report.md)
