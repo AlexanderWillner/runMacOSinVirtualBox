@@ -23,7 +23,7 @@ readonly INST_BIN="$INST_VER/Contents/Resources/createinstallmedia"
 readonly DST_DIR="${DST_DIR:-$HOME/VirtualBox VMs}"
 readonly VM_NAME="${VM_NAME:-macOS-VM}"
 readonly VM_DIR="${VM_DIR:-$DST_DIR/$VM_NAME}"
-readonly VM_SIZE="${VM_SIZE:-32768}"
+readonly VM_SIZE="${VM_SIZE:-131072}"
 readonly VM_RES="${VM_RES:-1680x1050}"
 readonly VM_SCALE="${VM_SCALE:-1.0}"
 readonly VM_RAM="${VM_RAM:-4096}"
@@ -79,16 +79,16 @@ runChecks() {
 	error "\$HOME should point to the users home directory. See issue #63."
   fi  
   if [ "$INST_VERS" = "0" ]; then
-    error "No macOS installer found. Download the installer first (e.g. via 'installinstallmacos.py') - press enter in the terminal when done..."
+    error "No macOS installer found at /Applications. Download the installer first (e.g. via 'installinstallmacos.py') - press enter in the terminal when done..."
     read -r
     exit 6
   fi
   if [ ! "$INST_VERS" = "1" ]; then
-    error "$INST_VERS macOS installers found. Don't know which one to select."
+    error "$INST_VERS macOS installers found at /Applications. Don't know which one to select."
     exit 7
   fi
   if [ ! -d "$INST_VER/Contents/SharedSupport/" ]; then
-    error "Partial macOS installer found. Download the full installer first (e.g. via 'installinstallmacos.py') - press enter in the terminal when done..."
+    error "Partial macOS installer found at /Applications. Download the full installer first (e.g. via 'installinstallmacos.py') - press enter in the terminal when done..."
     read -r
     exit 8
   fi
