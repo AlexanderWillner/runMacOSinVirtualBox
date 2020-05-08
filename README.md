@@ -8,22 +8,21 @@ Simple script to automatically download, install and run macOS 10.15 Catalina (a
 
 ## ToC
 
- * [Required Software](#required-software)
- * [Step by Step Video](#step-by-step-video)
- * [Step by Step](#step-by-step)
- * [FAQ](#faq)
+* [Required Software](#required-software)
+* [Step by Step Video](#step-by-step-video)
+* [Step by Step](#step-by-step)
+* [FAQ](#faq)
 
-
-##  Required Software
+## Required Software
 
 The following software is needed.
 
- * macOS Installer
- * VirtualBox
- * VirtualBox Extension Pack (note: released under the Personal Use and Evaluation License)
+* macOS Installer
+* VirtualBox
+* VirtualBox Extension Pack (note: released under the Personal Use and Evaluation License)
 
 ## Step by Step Video
- 
+
 Two minute summary video:
 
 [![Short Summary Video](https://img.youtube.com/vi/WmETOgRuMx4/0.jpg)](https://youtu.be/WmETOgRuMx4)
@@ -32,7 +31,7 @@ Two minute summary video:
 
 Execute ```make all``` to setup and run everything. After the installer reboots, press enter in the terminal to finish the installation.
 
-```
+```bash
 $ make all
 Running checks (around 1 second)....
 Creating image '/Users/awi/VirtualBox VMs/macOS-VM.dmg' (around 20 seconds, version 14.2.2, will need sudo)....
@@ -61,10 +60,9 @@ Additionally the following parameters can be customized with environment variabl
 | VM_VRAM       | video ram size in megabytes                         | 128                          |
 | VM_CPU        | number of cpu cores to allocate                     | 2                            |
 
-
 Execute ```make``` to get some help:
 
-```
+```bash
 $ make
 Some available commands:
  * all      : run everything needed (check, installer, vm, patch, run, stop, eject)
@@ -113,7 +111,7 @@ Some available commands:
   * A: Change the VM version in the settings from ```Mac OS X (64-bit)``` to ```macOS 10.13 High Sierra (64-bit)```
 * Slow
   * Q: Why is the VM so slow?
-  * A: Maybe [#71](https://github.com/AlexanderWillner/runMacOSinVirtualBox/issues/71) provides some insights. 
+  * A: Maybe [#71](https://github.com/AlexanderWillner/runMacOSinVirtualBox/issues/71) provides some insights.
 * Other Issue
   * Q: Something is not working. What should I do?
   * A: [Create a ticket](https://github.com/AlexanderWillner/runMacOSinVirtualBox/issues/new?template=bug_report.md)
