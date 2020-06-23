@@ -126,18 +126,20 @@ runChecks() {
 }
 
 ejectAll() {
+  # todo: replace this brute-force error-prone approach by a more coordinated approach
+
   hdiutil info | grep 'Install macOS' | awk '{print $1}' | while read -r i; do
-    hdiutil detach "$i" 2>/dev/null || true
+    hdiutil detach -force "$i" 2>/dev/null || true
   done
   hdiutil info | grep 'OS X Base System' | awk '{print $1}' | while read -r i; do
-    hdiutil detach "$i" 2>/dev/null || true
+    hdiutil detach -force "$i" 2>/dev/null || true
   done
   hdiutil info | grep 'InstallESD' | awk '{print $1}' | while read -r i; do
-    hdiutil detach "$i" 2>/dev/null || true
+    hdiutil detach -force "$i" 2>/dev/null || true
   done
-  hdiutil detach "$DST_VOL" 2>/dev/null || true
-  hdiutil detach /Volumes/EFI 2>/dev/null || true
-  find /Volumes/ -maxdepth 1 -name "NO NAME*" -exec hdiutil detach {} \; 2>/dev/null || true
+  hdiutil detach -force "$DST_VOL" 2>/dev/null || true
+  hdiutil detach -force /Volumes/EFI 2>/dev/null || true
+  find /Volumes/ -maxdepth 1 -name "NO NAME*" -exec hdiutil detach -force {} \; 2>/dev/null || true
 }
 
 createImage() {
@@ -228,10 +230,15 @@ createVM() {
   if [ ! -e "$DST_DIR/$VM_NAME.vdi" ]; then
     result "."
     ejectAll
-    hdiutil create -size "$VM_SIZE"MB -fs HFS+J -volname "macOS" -type SPARSE "$DST_SPARSE2"
-    if [ "$?" -ne "0" ]; then
-      error "Couldn't create $DST_SPARSE2"
-      exit 95
+    result "Creating $DST_SPARSE2..."
+    if [ ! -e "$DST_SPARSE2" ]; then
+      hdiutil create -size "$VM_SIZE"MB -fs "APFS" -volname "macOS" -type SPARSE "$DST_SPARSE2"
+      if [ "$?" -ne "0" ]; then
+        error "Couldn't create $DST_SPARSE2"
+        exit 95
+      fi
+    else
+      result "...already exists"
     fi
     MACOS_DEVICE=$(hdiutil attach -nomount "$DST_SPARSE2" 2>&1)
     if [ "$?" -ne "0" ]; then
@@ -239,12 +246,15 @@ createVM() {
       exit
     fi
     MACOS_DEVICE=$(echo $MACOS_DEVICE|egrep -o '/dev/disk[[:digit:]]{1}' |head -n1)
+    result "Converting virtual macOS disk: $MACOS_DEVICE"
+    # fixme: seems to hang since latest VirtualBox release
     VBoxManage convertfromraw "${MACOS_DEVICE}" "$DST_DIR/$VM_NAME.vdi" --format VDI
     diskutil eject "${MACOS_DEVICE}"
   else
     result "already exists."
   fi
   if [ ! -e "$DST_DIR/$VM_NAME.efi.vdi" ]; then
+    # fixme: might be an issue with macOS 10.16
     patchEFI
   fi
   info "Creating VM '$VM_NAME' (around 2 seconds)..." 99
@@ -335,6 +345,7 @@ main() {
     case "$ARG" in
     check) runChecks ;;
     clean) runClean ;;
+    cleanup) cleanup ;;
     stash) VBoxManage unregistervm --delete "$VM_NAME"||true ;;
     stashvm) VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type dvddrive --medium emptydrive >/dev/null 2>&1||true ; VBoxManage unregistervm --delete "$VM_NAME"||true ;;
     installer) createImage ;;
