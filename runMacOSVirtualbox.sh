@@ -248,7 +248,7 @@ createVM() {
     MACOS_DEVICE=$(echo $MACOS_DEVICE|egrep -o '/dev/disk[[:digit:]]{1}' |head -n1)
     result "Converting virtual macOS disk: $MACOS_DEVICE"
     # fixme: seems to hang since latest VirtualBox release
-    VBoxManage convertfromraw "${MACOS_DEVICE}" "$DST_DIR/$VM_NAME.vdi" --format VDI
+    #VBoxManage convertfromraw "${MACOS_DEVICE}" "$DST_DIR/$VM_NAME.vdi" --format VDI
     diskutil eject "${MACOS_DEVICE}"
   else
     result "already exists."
@@ -265,6 +265,7 @@ createVM() {
     VBoxManage setextradata "$VM_NAME" "CustomVideoMode1" "${VM_RES}x32"
     VBoxManage setextradata "$VM_NAME" VBoxInternal2/EfiGraphicsResolution "$VM_RES"
     VBoxManage setextradata "$VM_NAME" GUI/ScaleFactor "$VM_SCALE"
+    VBoxManage setextradata macOS-VM "VBoxInternal/Devices/efi/0/Config/DmiBoardProduct" "Mac-E1008331FDC96864"
     VBoxManage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAHCI --hostiocache on
     VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$DST_DIR/$VM_NAME.efi.vdi"
     VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type hdd --nonrotational on --medium "$DST_DIR/$VM_NAME.vdi"
