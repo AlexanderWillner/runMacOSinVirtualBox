@@ -36,6 +36,8 @@ readonly DST_SPARSE="$DST_DIR/$VM_NAME.efi.sparseimage"
 readonly DST_SPARSE2="$DST_DIR/$VM_NAME.sparseimage"
 readonly FILE_EFI="/usr/standalone/i386/apfs.efi"
 readonly FILE_LOG="$HOME/Library/Logs/runMacOSVirtualbox.log"
+readonly HOST_SERIAL="$(ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/IOPlatformSerialNumber/{print $(NF-1)}')"
+readonly HOST_ID="$(ioreg -l | grep "board-id" | awk -F\" '/board-id/{print $(NF-1)}')"
 ###############################################################################
 
 # Logging #####################################################################
@@ -254,7 +256,6 @@ createVM() {
     result "already exists."
   fi
   if [ ! -e "$DST_DIR/$VM_NAME.efi.vdi" ]; then
-    # fixme: might be an issue with macOS 10.16
     patchEFI
   fi
   info "Creating VM '$VM_NAME' (around 2 seconds)..." 99
@@ -265,7 +266,8 @@ createVM() {
     VBoxManage setextradata "$VM_NAME" "CustomVideoMode1" "${VM_RES}x32"
     VBoxManage setextradata "$VM_NAME" VBoxInternal2/EfiGraphicsResolution "$VM_RES"
     VBoxManage setextradata "$VM_NAME" GUI/ScaleFactor "$VM_SCALE"
-    VBoxManage setextradata macOS-VM "VBoxInternal/Devices/efi/0/Config/DmiBoardProduct" "Mac-E1008331FDC96864"
+    VBoxManage setextradata "$VM_NAME" "VBoxInternal/Devices/efi/0/Config/DmiBoardProduct" "$HOST_ID"
+    VBoxManage setextradata "$VM_NAME" "VBoxInternal/Devices/efi/0/Config/DmiSystemSerial" "$HOST_SERIAL"
     VBoxManage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAHCI --hostiocache on
     VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$DST_DIR/$VM_NAME.efi.vdi"
     VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type hdd --nonrotational on --medium "$DST_DIR/$VM_NAME.vdi"
@@ -302,7 +304,7 @@ waitVM() {
 }
 
 stopVM() {
-  info "Press enter to stop the VM and to eject the installer medium (to avoid an installation loop)..."
+  info "Press enter to stop the VM and to eject the installer medium (to avoid an installation loop for macOS < 10.16)..."
   result "."
   read
   VBoxManage controlvm "$VM_NAME" poweroff||true
