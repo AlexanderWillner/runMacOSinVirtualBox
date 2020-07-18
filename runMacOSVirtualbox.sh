@@ -87,7 +87,7 @@ log() {
 }
 
 runChecks() {
-  info "Running checks (around 1 second)..." 0
+  info "Running checks..." 0
   result "."
   if [[ ! $HOME == /Users* ]]; then
 	error "\$HOME should point to the users home directory. See issue #63."
@@ -158,7 +158,7 @@ ejectAll() {
 
 createImage() {
   version="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$INST_VER/Contents/Info.plist")"
-  info "Creating image '$DST_DMG' (around 20 seconds, version $version, will need sudo)..." 30
+  info "Creating image '$DST_DMG' (takes a while, version $version, will need sudo)..." 30
   if [ ! -e "$DST_DMG" ]; then
     result "."
     ejectAll
@@ -171,7 +171,7 @@ createImage() {
   else
     result "already exists."
   fi
-  info "Creating iso '$DST_ISO' (around 25 seconds)..." 40
+  info "Creating iso '$DST_ISO'..." 40
   if [ ! -e "$DST_ISO" ]; then
     result "."
     mkdir -p "$DST_DIR"
@@ -182,7 +182,7 @@ createImage() {
 }
 
 patchEFI() {
-  info "Adding APFS drivers to EFI in '$DST_DIR/$VM_NAME.efi.vdi' (around 5 seconds)..."
+  info "Adding APFS drivers to EFI in '$DST_DIR/$VM_NAME.efi.vdi'..."
   result "."
 
   ejectAll
@@ -240,7 +240,7 @@ createVM() {
   if [ ! -e "$VM_DIR" ]; then
     mkdir -p "$VM_DIR"
   fi
-  info "Creating VM HDD '$DST_DIR/$VM_NAME.vdi' (around 1 minute)..." 90
+  info "Creating VM HDD '$DST_DIR/$VM_NAME.vdi' (takes a while)..." 90
   if [ ! -e "$DST_DIR/$VM_NAME.vdi" ]; then
     result "."
     ejectAll
@@ -261,8 +261,7 @@ createVM() {
     fi
     MACOS_DEVICE=$(echo $MACOS_DEVICE|egrep -o '/dev/disk[[:digit:]]{1}' |head -n1)
     result "Converting virtual macOS disk: $MACOS_DEVICE"
-    # fixme: seems to hang since latest VirtualBox release
-    #VBoxManage convertfromraw "${MACOS_DEVICE}" "$DST_DIR/$VM_NAME.vdi" --format VDI
+    VBoxManage convertfromraw "${MACOS_DEVICE}" "$DST_DIR/$VM_NAME.vdi" --format VDI
     diskutil eject "${MACOS_DEVICE}"
   else
     result "already exists."
@@ -270,7 +269,7 @@ createVM() {
   if [ ! -e "$DST_DIR/$VM_NAME.efi.vdi" ]; then
     patchEFI
   fi
-  info "Creating VM '$VM_NAME' (around 2 seconds)..." 99
+  info "Creating VM '$VM_NAME'..." 99
   if ! VBoxManage showvminfo "$VM_NAME" >/dev/null 2>&1; then
     result "."
     VBoxManage createvm --register --name "$VM_NAME" --basefolder "$DST_DIR" --ostype MacOS1013_64
@@ -304,7 +303,7 @@ createVM() {
 }
 
 runVM() {
-  info "Starting VM '$VM_NAME' (3 minutes in the VM)..." 100
+  info "Starting VM '$VM_NAME'..." 100
   if ! VBoxManage showvminfo "$VM_NAME" | grep "State:" | grep -i running >/dev/null; then
     result "."
     VBoxManage startvm "$VM_NAME" --type gui
@@ -339,6 +338,14 @@ removeInstaller() {
   result "."
   # Skip installation DVD to boot from new disk
   VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --medium emptydrive >/dev/null 2>&1||true
+}
+
+download() {
+  info "Downloading macOS (need sudo)..."
+  result "."
+  exec 1>&3
+  sudo ./installinstallmacos.py
+  info "Please move installer to /Applications now."
 }
 
 addInstaller() {
@@ -382,6 +389,7 @@ main() {
     stop) stopVM ;;
     eject) removeInstaller ;;
     add) addInstaller ;;
+    download) download ;;
     all) runChecks && createImage && createVM && patchEFI && runVM && stopVM && removeInstaller && runVM ;;
     *) echo "Possible commands: clean, stash, all, check, installer, patch, vm, run, stop, wait, eject, add" >&4 ;;
     esac
