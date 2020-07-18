@@ -11,7 +11,19 @@
 # Source  : https://github.com/AlexanderWillner/runMacOSinVirtualBox
 ###############################################################################
 
+
+# Logging #####################################################################
+readonly FILE_LOG="$HOME/Library/Logs/runMacOSVirtualbox.log"
+echo "Logfile: $FILE_LOG"
+exec 3>&1
+exec 4>&2
+exec 1>>"$FILE_LOG"
+exec 2>&1
+###############################################################################
+
+
 # Core parameters #############################################################
+echo "Collecting system information..."
 readonly PATH="$PATH:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin"
 readonly SCRIPTPATH="$(
   cd "$(dirname "$0")" || exit
@@ -35,26 +47,18 @@ readonly DST_ISO="$DST_DIR/$VM_NAME.iso.cdr"
 readonly DST_SPARSE="$DST_DIR/$VM_NAME.efi.sparseimage"
 readonly DST_SPARSE2="$DST_DIR/$VM_NAME.sparseimage"
 readonly FILE_EFI="/usr/standalone/i386/apfs.efi"
-readonly FILE_LOG="$HOME/Library/Logs/runMacOSVirtualbox.log"
 readonly HOST_SERIAL="$(ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/IOPlatformSerialNumber/{print $(NF-1)}')"
 readonly HOST_ID="$(ioreg -l | grep "board-id" | awk -F\" '/board-id/{print $(NF-1)}')"
 readonly HOST_UUID="$(ioreg -l -p IODeviceTree | awk -F"\<|>" '/"system-id"/{print $(NF-1)}')"
-readonly VM_SYSTEM_FAMILY="MacBook Pro"
-readonly VM_SYSTEM_PRODUCT="MacBookPro11,2"
-readonly VM_SYSTEM_UUID="CAFECAFE-CAFE-CAFE-CAFE-DECAFFDECAFF"
+readonly VM_SYSTEM_FAMILY="$(system_profiler SPHardwareDataType |  awk -F': ' ' /Model Name/ { print $2 } ')"
+readonly VM_SYSTEM_PRODUCT="$(system_profiler SPHardwareDataType |  awk -F': ' ' /Model Identifier/ { print $2 } ')"
+readonly VM_SYSTEM_UUID="$(system_profiler SPHardwareDataType |  awk -F': ' ' /Hardware UUID/ { print $2 } ')"
 readonly VM_SYSTEM_VER="string:1"
 readonly VM_SYSTEM_REV="string:.23456"
-readonly VM_SYSTEM_BIOS="string:MBP7.89"
-readonly VM_SYSTEM_SN="NO_LOGIC_BOARD_SN"
+readonly VM_SYSTEM_BIOS="$(system_profiler SPHardwareDataType |  awk -F': ' ' /Boot ROM Version/ { print $2 } ')"
+readonly VM_SYSTEM_SN="$(system_profiler SPHardwareDataType |  awk -F': ' ' /Serial Number \(system\)/ { print $2 } ')"
 ###############################################################################
 
-# Logging #####################################################################
-echo "Logfile: $FILE_LOG"
-exec 3>&1
-exec 4>&2
-exec 1>>"$FILE_LOG"
-exec 2>&1
-###############################################################################
 
 # Define methods ##############################################################
 debug() {
