@@ -54,9 +54,6 @@ DEFAULT_SUCATALOGS = {
     '19': 'https://swscan.apple.com/content/catalogs/others/'
           'index-10.15-10.14-10.13-10.12-10.11-10.10-10.9'
           '-mountainlion-lion-snowleopard-leopard.merged-1.sucatalog',
-    '20': 'https://swscan.apple.com/content/catalogs/others/'
-          'index-10.16seed-10.16-10.15-10.14-10.13-10.12-10.11-10.10-10.9'
-          '-mountainlion-lion-snowleopard-leopard.merged-1.sucatalog',
 }
 
 SEED_CATALOGS_PLIST = (
@@ -264,8 +261,13 @@ def replicate_url(full_url,
         options = '-fL'
     else:
         options = '-sfL'
-    curl_cmd = ['/usr/bin/curl', options, '--create-dirs',
+    curl_cmd = ['/usr/bin/curl', options,
+                '--create-dirs',
                 '-o', local_file_path]
+    if not full_url.endswith(".gz"):
+        # stupid hack for stupid Apple behavior where it sometimes returns
+        # compressed files even when not asked for
+        curl_cmd.append('--compressed')
     if not ignore_cache and os.path.exists(local_file_path):
         curl_cmd.extend(['-z', local_file_path])
         if attempt_resume:
@@ -508,6 +510,16 @@ def main():
     if os.getuid() != 0:
         sys.exit('This command requires root (to install packages), so please '
                  'run again with sudo or as root.')
+
+    current_dir = os.getcwd()
+    if os.path.expanduser("~") in current_dir:
+        bad_dirs = ['Documents', 'Desktop', 'Downloads', 'Library']
+        for bad_dir in bad_dirs:
+            if bad_dir in os.path.split(current_dir):
+                print('Running this script from %s may not work as expected. '
+                      'If this does not run as expected, please run again from '
+                      'somewhere else, such as /Users/Shared.'
+                      % current_dir, file=sys.stderr)
 
     if args.catalogurl:
         su_catalog_url = args.catalogurl
