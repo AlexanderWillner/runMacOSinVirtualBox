@@ -347,7 +347,7 @@ download() {
   result "."
   exec 1>&3
   sudo ./installinstallmacos.py
-  info "Please move installer to /Applications now."
+  info "Please mount the produced .dmg file and move the contained installer to /Applications now."
 }
 
 addInstaller() {
