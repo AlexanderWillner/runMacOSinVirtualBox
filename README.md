@@ -10,10 +10,14 @@ Simple script to automatically download, install and run macOS 11 Big Sur (and o
 
 ## ToC
 
-* [Required Software](#required-software)
-* [Step by Step Video](#step-by-step-video)
-* [Step by Step](#step-by-step)
-* [FAQ](#faq)
+- [Run macOS 11 Big Sur (and other versions) in VirtualBox on macOS](#run-macos-11-big-sur-and-other-versions-in-virtualbox-on-macos)
+  - [Overview](#overview)
+  - [ToC](#toc)
+  - [Required Software](#required-software)
+  - [Step by Step Video](#step-by-step-video)
+  - [Step by Step](#step-by-step)
+    - [Customizing your build](#customizing-your-build)
+  - [FAQ](#faq)
 
 ## Required Software
 
@@ -54,8 +58,9 @@ Additionally the following parameters can be customized with environment variabl
 
 | variable name | description                                         | default value                |
 |---------------|-----------------------------------------------------|------------------------------|
+| DST_DIR       | root directory, where the VM will be stored         | $HOME/VirtualBox VMs/        |
 | VM_NAME       | name of the virtual machine                         | macOS-VM                     |
-| VM_DIR        | directory, where the virtual machine will be stored | HOME/VirtualBox VMs/$VM_NAME |
+| VM_DIR        | sub directory, where the VM will be stored          | $DST_DIR/$VM_NAME            |
 | VM_SIZE       | the size of the hard disk                           | 131072                       |
 | VM_RES        | monitor resolution                                  | 1680x1050                    |
 | VM_RAM        | ram size in megabytes                               | 4096                         |
