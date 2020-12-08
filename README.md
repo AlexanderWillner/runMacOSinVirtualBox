@@ -54,9 +54,9 @@ Additionally the following parameters can be customized with environment variabl
 
 | variable name | description                                         | default value                |
 |---------------|-----------------------------------------------------|------------------------------|
-| VM_NAME       | name of the virtual machine                         | macOS-VM                 |
+| VM_NAME       | name of the virtual machine                         | macOS-VM                     |
 | VM_DIR        | directory, where the virtual machine will be stored | HOME/VirtualBox VMs/$VM_NAME |
-| VM_SIZE       | the size of the hard disk                           | 32768                        |
+| VM_SIZE       | the size of the hard disk                           | 131072                       |
 | VM_RES        | monitor resolution                                  | 1680x1050                    |
 | VM_RAM        | ram size in megabytes                               | 4096                         |
 | VM_VRAM       | video ram size in megabytes                         | 128                          |
