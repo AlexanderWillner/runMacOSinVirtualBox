@@ -139,6 +139,16 @@ runChecks() {
   fi
 }
 
+function rmIfEmpty() {
+  if [ -d "$1" ] && [ -w "$1" ]; then
+    if [ -z "$(ls -A $1)" ] ; then
+       rm -r "$1"
+    else
+       error "$1 not empty"
+    fi
+  fi
+}
+
 ejectAll() {
   # todo: replace this brute-force error-prone approach by a more coordinated approach
 
@@ -152,8 +162,13 @@ ejectAll() {
     hdiutil detach -force "$i" 2>/dev/null || true
   done
   hdiutil detach -force "$DST_VOL" 2>/dev/null || true
+  rmIfEmpty "$DST_VOL"
   hdiutil detach -force /Volumes/EFI 2>/dev/null || true
+  rmIfEmpty "/Volumes/EFI/EFI/drivers"
+  rmIfEmpty "/Volumes/EFI/EFI"
+  rmIfEmpty "/Volumes/EFI"
   find /Volumes/ -maxdepth 1 -name "NO NAME*" -exec hdiutil detach -force {} \; 2>/dev/null || true
+  rmIfEmpty "/Volumes/NO NAME"
 }
 
 createImage() {
