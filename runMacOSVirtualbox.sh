@@ -2,7 +2,7 @@
 #
 # DESCRIPTION
 #
-# Run macOS Catalina and older versions in Virtualbox.
+# Run macOS Big Sur and older versions in Virtualbox.
 #
 # CREDITS
 #
