@@ -4,6 +4,7 @@ SHELL=bash
 help:
 	@echo "Some available commands:"
 	@echo " * all      : run everything needed (check, installer, vm, patch, run, stop, eject)"
+	@echo " * download : download a macOS installer"
 	@echo " * check    : check environment"
 	@echo " * installer: create macOS installer image"
 	@echo " * patch    : add APFS drivers to VM EFI to boot"
@@ -24,6 +25,9 @@ help:
 
 all:
 	@bash  $(SCRIPT) all
+
+download:
+	@bash  $(SCRIPT) download
 
 check:
 	@bash  $(SCRIPT) check
