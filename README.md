@@ -92,6 +92,9 @@ Some available commands:
 
 ## FAQ
 
+* Download macOS
+  * Q: Where can I download macOS?
+  * A: Execute the script `installinstallmacos.py` - this produces a `dmg` file which you can open. Within this image you can find the `app` that should be copied to `/Applications`.
 * Graphic Issues
   * Q: Applications such as Apple Maps do not work as expected.
   * A: There is currently no 3D acceleration, therefore some applications do not work.
@@ -119,9 +122,6 @@ Some available commands:
 * Slow
   * Q: Why is the VM so slow?
   * A: Maybe [#71](https://github.com/AlexanderWillner/runMacOSinVirtualBox/issues/71) provides some insights.
-* Download macOS
-  * Q: Where can I download macOS?
-  * A: Look at the script `installinstallmacos.py`
 * Other Issue
   * Q: Something is not working. What should I do?
   * A: [Create a ticket](https://github.com/AlexanderWillner/runMacOSinVirtualBox/issues/new?template=bug_report.md)
