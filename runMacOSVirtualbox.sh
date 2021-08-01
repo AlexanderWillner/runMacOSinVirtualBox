@@ -289,7 +289,7 @@ createVM() {
     result "."
     VBoxManage createvm --register --name "$VM_NAME" --basefolder "$DST_DIR" --ostype MacOS1013_64
     VBoxManage modifyvm "$VM_NAME" --usbxhci on --memory "$VM_RAM" --vram "$VM_VRAM" --cpus "$VM_CPU" \
-      --firmware efi --chipset ich9 --mouse usbtablet --keyboard usb \
+      --firmware efi --chipset ich9 --mouse usbtablet --keyboard usb --nested-hw-virt off \
       --cpu-profile "Intel Core i7-6700K" --cpuidset 00000001 000106e5 00100800 0098e3fd bfebfbff
     VBoxManage setextradata "$VM_NAME" "CustomVideoMode1" "${VM_RES}x32"
     VBoxManage setextradata "$VM_NAME" VBoxInternal2/EfiGraphicsResolution "$VM_RES"
