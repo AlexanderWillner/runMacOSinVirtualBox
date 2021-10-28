@@ -23,9 +23,9 @@ Simple script to automatically download, install and run macOS 11 Big Sur (and o
 
 The following software is needed.
 
-* macOS Installer
-* VirtualBox
-* VirtualBox Extension Pack (note: released under the Personal Use and Evaluation License)
+- macOS Installer
+- VirtualBox
+- VirtualBox Extension Pack (note: released under the Personal Use and Evaluation License)
 
 ## Step by Step Video
 
@@ -92,36 +92,36 @@ Some available commands:
 
 ## FAQ
 
-* Download macOS
-  * Q: Where can I download macOS?
-  * A: Execute the script `installinstallmacos.py` - this produces a `dmg` file which you can open. Within this image you can find the `app` that should be copied to `/Applications`.
-* Graphic Issues
-  * Q: Applications such as Apple Maps do not work as expected.
-  * A: There is currently no 3D acceleration, therefore some applications do not work.
-* Recovery
-  * Q: How do I start the recovery mode?
-  * A: Start the VM as usual and be ready to press ```CMD+C``` when you see ```Trying to find a bootable device...``` to interrupt the regular boot process. At the following EFI shell prompt try to find the relevant volume holding ```boot.efi``` in a single randomly-named sub-directory of the root directory. So try to change the current volume by entering ```fs4:``` (or ```fs5:```, ```fs6:```, etc.), then enter ```cd TAB``` (where ```TAB``` is used to auto-complete the randomly-named sub-dir), then look for ```boot.efi``` in that dir. If existing, start Recovery by entering ```boot.efi```.
-* Installation Loop
-  * Q: After starting the installation the VM restarts and I see the installer again.
-  * A: You've to press enter in the terminal after the installer restarts.
-* Installation Not Starting
-  * Q: I've pressed ```Continue``` to start the installation and nothing happens for minutes.
-  * A: Your macOS installer might be incomplete or corrupted, please download it again from Apple.
-* Error Message
-  * Q: I get the error code 2, 3, 4, or 6.
-  * A: You need to have some software components installed on your machine (VirtualBox, VirtualBox Extension Pack, awk). If you've installed [Homebrew](https://brew.sh), the script will partly install these automatically. Otherwise, you need to install them manually.
-* Reboot
-  * Q: I see the message ```MACH Reboot```. What should I do?
-  * A: The VM failed to restart. Restart manually. However, this should not happen anymore with the latest version.
-* Kernel Panic
-  * Q: I see the message ```Error loading kernel cache (0x9)```. What should I do?
-  * A: This error is shown from time to time. Restart the VM. However, this should not happen anymore with the latest version.
-* Black Screen
-  * Q: When I then boot I don't see anything, just a black screen. What should I do?
-  * A: Change the VM version in the settings from ```Mac OS X (64-bit)``` to ```macOS 10.13 High Sierra (64-bit)```
-* Slow
-  * Q: Why is the VM so slow?
-  * A: Maybe [#71](https://github.com/AlexanderWillner/runMacOSinVirtualBox/issues/71) provides some insights.
-* Other Issue
-  * Q: Something is not working. What should I do?
-  * A: [Create a ticket](https://github.com/AlexanderWillner/runMacOSinVirtualBox/issues/new?template=bug_report.md)
+- Download macOS
+  - Q: Where can I download macOS?
+  - A: Execute the script `installinstallmacos.py` - this produces a `dmg` file which you can open. Within this image you can find the `app` that should be copied to `/Applications`.
+- Graphic Issues
+  - Q: Applications such as Apple Maps do not work as expected.
+  - A: There is currently no 3D acceleration, therefore some applications do not work.
+- Recovery
+  - Q: How do I start the recovery mode?
+  - A: Start the VM as usual and be ready to press ```CMD+C``` when you see ```Trying to find a bootable device...``` to interrupt the regular boot process. At the following EFI shell prompt try to find the relevant volume holding ```boot.efi``` in a single randomly-named sub-directory of the root directory. So try to change the current volume by entering ```fs4:``` (or ```fs5:```, ```fs6:```, etc.), then enter ```cd TAB``` (where ```TAB``` is used to auto-complete the randomly-named sub-dir), then look for ```boot.efi``` in that dir. If existing, start Recovery by entering ```boot.efi```.
+- Installation Loop
+  - Q: After starting the installation the VM restarts and I see the installer again.
+  - A: You've to press enter in the terminal after the installer restarts.
+- Installation Not Starting
+  - Q: I've pressed ```Continue``` to start the installation and nothing happens for minutes.
+  - A: Your macOS installer might be incomplete or corrupted, please download it again from Apple.
+- Error Message
+  - Q: I get the error code 2, 3, 4, or 6.
+  - A: You need to have some software components installed on your machine (VirtualBox, VirtualBox Extension Pack, awk). If you've installed [Homebrew](https://brew.sh), the script will partly install these automatically. Otherwise, you need to install them manually.
+- Reboot
+  - Q: I see the message ```MACH Reboot```. What should I do?
+  - A: The VM failed to restart. Restart manually. However, this should not happen anymore with the latest version.
+- Kernel Panic
+  - Q: I see the message ```Error loading kernel cache (0x9)```. What should I do?
+  - A: This error is shown from time to time. Restart the VM. However, this should not happen anymore with the latest version.
+- Black Screen
+  - Q: When I then boot I don't see anything, just a black screen. What should I do?
+  - A: Change the VM version in the settings from ```Mac OS X (64-bit)``` to ```macOS 10.13 High Sierra (64-bit)```
+- Slow
+  - Q: Why is the VM so slow?
+  - A: Maybe [#71](https://github.com/AlexanderWillner/runMacOSinVirtualBox/issues/71) provides some insights.
+- Other Issue
+  - Q: Something is not working. What should I do?
+  - A: [Create a ticket](https://github.com/AlexanderWillner/runMacOSinVirtualBox/issues/new?template=bug_report.md)
