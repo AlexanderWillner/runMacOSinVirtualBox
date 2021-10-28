@@ -90,7 +90,7 @@ runChecks() {
   info "Running checks..." 0
   result "."
   if [[ ! $HOME == /Users* ]]; then
-	error "\$HOME should point to the users home directory. See issue #63."
+	  error "\$HOME should point to the users home directory. See issue #63."
   fi  
   if [ "$INST_VERS" = "0" ]; then
     error "No macOS installer found at /Applications. Download the installer first (e.g. via 'installinstallmacos.py') - press enter in the terminal when done..."
@@ -113,7 +113,7 @@ runChecks() {
   if ! type VBoxManage >/dev/null 2>&1; then
     error "'VBoxManage' not installed. Trying to install automatically, if you've brew installed..."
     if type brew >/dev/null 2>&1; then
-      brew cask install virtualbox || exit 2
+      brew install virtualbox || exit 2
     else
       exit 2
     fi
@@ -129,7 +129,7 @@ runChecks() {
   fi
   if [ "$(VBoxManage list extpacks | grep 'USB 3.0')" = "" ]; then
     error "VirtualBox USB 3.0 Extension Pack not installed. Will not install it automatically, due to licensing issues!"
-    error "Install e.g. via brew cask install virtualbox-extension-pack"
+    error "Install e.g. via brew install virtualbox-extension-pack"
     exit 4
   fi
 
