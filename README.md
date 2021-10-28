@@ -4,7 +4,7 @@
 
 Simple script to automatically download, install and run macOS 11 Big Sur (and other versions) in VirtualBox on macOS. Since VirtualBox does not support booting from APFS volumes, this script is copying the APFS EFI drivers automatically.
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/722e2f9736844387b611945fb430d195)](https://app.codacy.com/app/AlexanderWillner/runMacOSinVirtualBox?utm_source=github.com&utm_medium=referral&utm_content=AlexanderWillner/runMacOSinVirtualBox&utm_campaign=Badge_Grade_Dashboard) [![download](https://img.shields.io/github/downloads/AlexanderWillner/runMacOSinVirtualBox/total)](https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/c0cd95d620854cfcb8784ff066b1b1c1)](https://www.codacy.com/gh/AlexanderWillner/runMacOSinVirtualBox/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=AlexanderWillner/runMacOSinVirtualBox&amp;utm_campaign=Badge_Grade) [![download](https://img.shields.io/github/downloads/AlexanderWillner/runMacOSinVirtualBox/total)](https://github.com/AlexanderWillner/runMacOSinVirtualBox/releases)
 
 ![macosBigSurBeta1](./img/macosBigSurBeta1.png)
 
