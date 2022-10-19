@@ -2,7 +2,7 @@
 #
 # DESCRIPTION
 #
-# Run macOS Catalina and older versions in Virtualbox.
+# Run macOS Big Sur and older versions in Virtualbox.
 #
 # CREDITS
 #
@@ -11,7 +11,19 @@
 # Source  : https://github.com/AlexanderWillner/runMacOSinVirtualBox
 ###############################################################################
 
+
+# Logging #####################################################################
+readonly FILE_LOG="$HOME/Library/Logs/runMacOSVirtualbox.log"
+echo "Logfile: $FILE_LOG"
+exec 3>&1
+exec 4>&2
+exec 1>>"$FILE_LOG"
+exec 2>&1
+###############################################################################
+
+
 # Core parameters #############################################################
+echo "Collecting system information..."
 readonly PATH="$PATH:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin"
 readonly SCRIPTPATH="$(
   cd "$(dirname "$0")" || exit
@@ -23,7 +35,7 @@ readonly INST_BIN="$INST_VER/Contents/Resources/createinstallmedia"
 readonly DST_DIR="${DST_DIR:-$HOME/VirtualBox VMs}"
 readonly VM_NAME="${VM_NAME:-macOS-VM}"
 readonly VM_DIR="${VM_DIR:-$DST_DIR/$VM_NAME}"
-readonly VM_SIZE="${VM_SIZE:-32768}"
+readonly VM_SIZE="${VM_SIZE:-131072}"
 readonly VM_RES="${VM_RES:-1680x1050}"
 readonly VM_SCALE="${VM_SCALE:-1.0}"
 readonly VM_RAM="${VM_RAM:-4096}"
@@ -35,16 +47,18 @@ readonly DST_ISO="$DST_DIR/$VM_NAME.iso.cdr"
 readonly DST_SPARSE="$DST_DIR/$VM_NAME.efi.sparseimage"
 readonly DST_SPARSE2="$DST_DIR/$VM_NAME.sparseimage"
 readonly FILE_EFI="/usr/standalone/i386/apfs.efi"
-readonly FILE_LOG="$HOME/Library/Logs/runMacOSVirtualbox.log"
+readonly HOST_SERIAL="$(ioreg -c IOPlatformExpertDevice -d 2 | awk -F\" '/IOPlatformSerialNumber/{print $(NF-1)}')"
+readonly HOST_ID="$(ioreg -l | grep "board-id" | awk -F\" '/board-id/{print $(NF-1)}')"
+readonly HOST_UUID="$(ioreg -l -p IODeviceTree | awk -F"\<|>" '/"system-id"/{print $(NF-1)}')"
+readonly VM_SYSTEM_FAMILY="$(system_profiler SPHardwareDataType |  awk -F': ' ' /Model Name/ { print $2 } ')"
+readonly VM_SYSTEM_PRODUCT="$(system_profiler SPHardwareDataType |  awk -F': ' ' /Model Identifier/ { print $2 } ')"
+readonly VM_SYSTEM_UUID="$(system_profiler SPHardwareDataType |  awk -F': ' ' /Hardware UUID/ { print $2 } ')"
+readonly VM_SYSTEM_VER="string:1"
+readonly VM_SYSTEM_REV="string:.23456"
+readonly VM_SYSTEM_BIOS="$(system_profiler SPHardwareDataType |  awk -F': ' ' /Boot ROM Version/ { print $2 } ')"
+readonly VM_SYSTEM_SN="$(system_profiler SPHardwareDataType |  awk -F': ' ' /Serial Number \(system\)/ { print $2 } ')"
 ###############################################################################
 
-# Logging #####################################################################
-echo "Logfile: $FILE_LOG"
-exec 3>&1
-exec 4>&2
-exec 1>>"$FILE_LOG"
-exec 2>&1
-###############################################################################
 
 # Define methods ##############################################################
 debug() {
@@ -55,25 +69,11 @@ debug() {
 error() {
   echo "ERROR: $1" >&4
   log "$1"
-  if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
-    osascript -e 'tell application "'"$SCRIPTPATH/ProgressDialog.app"'"' -e 'activate' \
-      -e 'set name of window 1 to "Installing macOS in Virtualbox"' \
-      -e 'set message of window 1 to "'"ERROR: $1"'."' \
-      -e 'set percent of window 1 to (100)' \
-      -e 'end tell'
-  fi
 }
 
 info() {
   echo -n "$1" >&3
   log "$1"
-  if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
-    osascript -e 'tell application "'"$SCRIPTPATH/ProgressDialog.app"'"' -e 'activate' \
-      -e 'set name of window 1 to "Installing macOS in Virtualbox"' \
-      -e 'set message of window 1 to "'"$1"'...'"$2"'%."' \
-      -e 'set percent of window 1 to ('"$2"')' \
-      -e 'end tell'
-  fi
 }
 
 result() {
@@ -87,30 +87,22 @@ log() {
 }
 
 runChecks() {
-  info "Running checks (around 1 second)..." 0
+  info "Running checks..." 0
   result "."
   if [[ ! $HOME == /Users* ]]; then
-	error "\$HOME should point to the users home directory. See issue #63."
+	  error "\$HOME should point to the users home directory. See issue #63."
   fi  
-  if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
-    info "Opening GUI..." 0
-    open "$SCRIPTPATH/ProgressDialog.app"
-  fi
   if [ "$INST_VERS" = "0" ]; then
-    open 'https://beta.apple.com/sp/betaprogram/redemption#macos'
-    error "No macOS installer found. Opening the web page for you (press enter in the terminal when done)..."
-    debug "You can also create an installer using the script 'installinstallmacos.py' (use Google)..."
+    error "No macOS installer found at /Applications. Download the installer first (e.g. via 'installinstallmacos.py') - press enter in the terminal when done..."
     read -r
     exit 6
   fi
   if [ ! "$INST_VERS" = "1" ]; then
-    error "$INST_VERS macOS installers found. Don't know which one to select."
+    error "$INST_VERS macOS installers found at /Applications. Don't know which one to select."
     exit 7
   fi
   if [ ! -d "$INST_VER/Contents/SharedSupport/" ]; then
-    open 'https://beta.apple.com/sp/betaprogram/redemption#macos'
-    error "Seems you've downloaded the macOS Stub Installer. Please download the full installer (google the issue)."
-    debug "Follow Step 2 (Download the macOS Public Beta Access Utility). Opening the web page for you (press enter in the terminal when done)..."
+    error "Partial macOS installer found at /Applications. Download the full installer first (e.g. via 'installinstallmacos.py') - press enter in the terminal when done..."
     read -r
     exit 8
   fi
@@ -121,7 +113,7 @@ runChecks() {
   if ! type VBoxManage >/dev/null 2>&1; then
     error "'VBoxManage' not installed. Trying to install automatically, if you've brew installed..."
     if type brew >/dev/null 2>&1; then
-      brew cask install virtualbox || exit 2
+      brew install virtualbox || exit 2
     else
       exit 2
     fi
@@ -135,11 +127,12 @@ runChecks() {
       exit 6
     fi
   fi
-  if [ "$(VBoxManage list extpacks | grep 'USB 3.0')" = "" ]; then
-    error "VirtualBox USB 3.0 Extension Pack not installed. Will not install it automatically, due to licensing issues!"
-    error "Install e.g. via brew cask install virtualbox-extension-pack"
-    exit 4
-  fi
+  # Not needed anymore
+  # if [ "$(VBoxManage list extpacks | grep 'USB 3.0')" = "" ]; then
+  #   error "VirtualBox USB 3.0 Extension Pack not installed. Will not install it automatically, due to licensing issues!"
+  #   error "Install e.g. via brew install virtualbox-extension-pack"
+  #   exit 4
+  # fi
 
   if ! diskutil listFilesystems | grep -q APFS; then
     error "This host does not support required APFS filesystem. You must upgrade to High Sierra or later and try again."
@@ -147,29 +140,46 @@ runChecks() {
   fi
 }
 
+function rmIfEmpty() {
+  if [ -d "$1" ] && [ -w "$1" ]; then
+    if [ -z "$(ls -A $1)" ] ; then
+       rm -r "$1"
+    else
+       error "$1 not empty"
+    fi
+  fi
+}
+
 ejectAll() {
+  # todo: replace this brute-force error-prone approach by a more coordinated approach
+
   hdiutil info | grep 'Install macOS' | awk '{print $1}' | while read -r i; do
-    hdiutil detach "$i" 2>/dev/null || true
+    hdiutil detach -force "$i" 2>/dev/null || true
   done
   hdiutil info | grep 'OS X Base System' | awk '{print $1}' | while read -r i; do
-    hdiutil detach "$i" 2>/dev/null || true
+    hdiutil detach -force "$i" 2>/dev/null || true
   done
   hdiutil info | grep 'InstallESD' | awk '{print $1}' | while read -r i; do
-    hdiutil detach "$i" 2>/dev/null || true
+    hdiutil detach -force "$i" 2>/dev/null || true
   done
-  hdiutil detach "$DST_VOL" 2>/dev/null || true
-  hdiutil detach /Volumes/EFI 2>/dev/null || true
-  find /Volumes/ -maxdepth 1 -name "NO NAME*" -exec hdiutil detach {} \; 2>/dev/null || true
+  hdiutil detach -force "$DST_VOL" 2>/dev/null || true
+  rmIfEmpty "$DST_VOL"
+  hdiutil detach -force /Volumes/EFI 2>/dev/null || true
+  rmIfEmpty "/Volumes/EFI/EFI/drivers"
+  rmIfEmpty "/Volumes/EFI/EFI"
+  rmIfEmpty "/Volumes/EFI"
+  find /Volumes/ -maxdepth 1 -name "NO NAME*" -exec hdiutil detach -force {} \; 2>/dev/null || true
+  rmIfEmpty "/Volumes/NO NAME"
 }
 
 createImage() {
   version="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$INST_VER/Contents/Info.plist")"
-  info "Creating image '$DST_DMG' (around 20 seconds, version $version, will need sudo)..." 30
+  info "Creating image '$DST_DMG' (takes a while, version $version, will need sudo)..." 30
   if [ ! -e "$DST_DMG" ]; then
     result "."
     ejectAll
     mkdir -p "$DST_DIR"
-    hdiutil create -o "$DST_DMG" -size 10g -layout SPUD -fs HFS+J &&
+    hdiutil create -o "$DST_DMG" -size 16g -layout SPUD -fs HFS+J &&
     hdiutil attach "$DST_DMG" -mountpoint "$DST_VOL" &&
     sudo "$INST_BIN" --nointeraction --volume "$DST_VOL" --applicationpath "$INST_VER" ||
     error "Could create or run installer. Please look in the log file..."
@@ -177,7 +187,7 @@ createImage() {
   else
     result "already exists."
   fi
-  info "Creating iso '$DST_ISO' (around 25 seconds)..." 40
+  info "Creating iso '$DST_ISO'..." 40
   if [ ! -e "$DST_ISO" ]; then
     result "."
     mkdir -p "$DST_DIR"
@@ -188,7 +198,7 @@ createImage() {
 }
 
 patchEFI() {
-  info "Adding APFS drivers to EFI in '$DST_DIR/$VM_NAME.efi.vdi' (around 5 seconds)..."
+  info "Adding APFS drivers to EFI in '$DST_DIR/$VM_NAME.efi.vdi'..."
   result "."
 
   ejectAll
@@ -246,14 +256,19 @@ createVM() {
   if [ ! -e "$VM_DIR" ]; then
     mkdir -p "$VM_DIR"
   fi
-  info "Creating VM HDD '$DST_DIR/$VM_NAME.vdi' (around 1 minute)..." 90
+  info "Creating VM HDD '$DST_DIR/$VM_NAME.vdi' (takes a while)..." 90
   if [ ! -e "$DST_DIR/$VM_NAME.vdi" ]; then
     result "."
     ejectAll
-    hdiutil create -size "$VM_SIZE"MB -fs HFS+J -volname "macOS" -type SPARSE "$DST_SPARSE2"
-    if [ "$?" -ne "0" ]; then
-      error "Couldn't create $DST_SPARSE2"
-      exit 95
+    result "Creating $DST_SPARSE2..."
+    if [ ! -e "$DST_SPARSE2" ]; then
+      hdiutil create -size "$VM_SIZE"MB -fs "APFS" -volname "macOS" -type SPARSE "$DST_SPARSE2"
+      if [ "$?" -ne "0" ]; then
+        error "Couldn't create $DST_SPARSE2"
+        exit 95
+      fi
+    else
+      result "...already exists"
     fi
     MACOS_DEVICE=$(hdiutil attach -nomount "$DST_SPARSE2" 2>&1)
     if [ "$?" -ne "0" ]; then
@@ -261,6 +276,7 @@ createVM() {
       exit
     fi
     MACOS_DEVICE=$(echo $MACOS_DEVICE|egrep -o '/dev/disk[[:digit:]]{1}' |head -n1)
+    result "Converting virtual macOS disk: $MACOS_DEVICE"
     VBoxManage convertfromraw "${MACOS_DEVICE}" "$DST_DIR/$VM_NAME.vdi" --format VDI
     diskutil eject "${MACOS_DEVICE}"
   else
@@ -269,15 +285,31 @@ createVM() {
   if [ ! -e "$DST_DIR/$VM_NAME.efi.vdi" ]; then
     patchEFI
   fi
-  info "Creating VM '$VM_NAME' (around 2 seconds)..." 99
+  info "Creating VM '$VM_NAME'..." 99
   if ! VBoxManage showvminfo "$VM_NAME" >/dev/null 2>&1; then
     result "."
-    VBoxManage createvm --register --name "$VM_NAME" --ostype MacOS1013_64
-    VBoxManage modifyvm "$VM_NAME" --usbxhci on --memory "$VM_RAM" --vram "$VM_VRAM" --cpus "$VM_CPU" --firmware efi --chipset ich9 --mouse usbtablet --keyboard usb
+    VBoxManage createvm --register --name "$VM_NAME" --basefolder "$DST_DIR" --ostype MacOS1013_64
+    VBoxManage modifyvm "$VM_NAME" --usbxhci on --memory "$VM_RAM" --vram "$VM_VRAM" --cpus "$VM_CPU" \
+      --firmware efi --chipset ich9 --mouse usbtablet --keyboard usb --nested-hw-virt off --nestedpaging off \
+      --cpu-profile "Intel Core i7-6700K" --cpuidset 00000001 000106e5 00100800 0098e3fd bfebfbff
     VBoxManage setextradata "$VM_NAME" "CustomVideoMode1" "${VM_RES}x32"
     VBoxManage setextradata "$VM_NAME" VBoxInternal2/EfiGraphicsResolution "$VM_RES"
     VBoxManage setextradata "$VM_NAME" GUI/ScaleFactor "$VM_SCALE"
-    VBoxManage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAHCI --hostiocache on
+    VBoxManage setextradata "$VM_NAME" "VBoxInternal/Devices/efi/0/Config/DmiBoardProduct" "string:${HOST_ID}"
+    VBoxManage setextradata "$VM_NAME" "VBoxInternal/Devices/efi/0/Config/DmiSystemSerial" "string:${HOST_SERIAL}"
+    VBoxManage setextradata "$VM_NAME" "VBoxInternal/Devices/efi/0/Config/DmiSystemFamily" "${VM_SYSTEM_FAMILY}"
+    VBoxManage setextradata "$VM_NAME" "VBoxInternal/Devices/efi/0/Config/DmiSystemProduct" "${VM_SYSTEM_PRODUCT}"
+    VBoxManage setextradata "$VM_NAME" "VBoxInternal/Devices/efi/0/Config/DmiSystemUuid" "${VM_SYSTEM_UUID}"
+    VBoxManage setextradata "$VM_NAME" "VBoxInternal/Devices/efi/0/Config/DmiOEMVBoxVer" "${VM_SYSTEM_VER}"
+    VBoxManage setextradata "$VM_NAME" "VBoxInternal/Devices/efi/0/Config/DmiOEMVBoxRev" "${VM_SYSTEM_REV}"
+    VBoxManage setextradata "$VM_NAME" "VBoxInternal/Devices/efi/0/Config/DmiBIOSVersion" "${VM_SYSTEM_BIOS}"
+    VBoxManage setextradata "$VM_NAME" "VBoxInternal/Devices/efi/0/Config/DmiBoardSerial" "${VM_SYSTEM_SN}"
+    VBoxManage setextradata "$VM_NAME" "VBoxInternal/Devices/efi/0/Config/DmiSystemVendor" "Apple Inc."
+    VBoxManage setextradata "$VM_NAME" "VBoxInternal/Devices/efi/0/Config/DmiSystemVersion" "1.0"
+    VBoxManage setextradata "$VM_NAME" "VBoxInternal/Devices/smc/0/Config/DeviceKey" "ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc"
+    VBoxManage setextradata "$VM_NAME" "VBoxInternal/Devices/smc/0/Config/GetKeyFromRealSMC" 0
+    VBoxManage setextradata "$VM_NAME" "VBoxInternal/TM/TSCMode" "RealTSCOffset"
+    VBoxManage storagectl "$VM_NAME" --name "SATA Controller" --add sata --controller IntelAHCI --hostiocache on --portcount 4
     VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --nonrotational on --medium "$DST_DIR/$VM_NAME.efi.vdi"
     VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 1 --device 0 --type hdd --nonrotational on --medium "$DST_DIR/$VM_NAME.vdi"
     addInstaller
@@ -290,7 +322,7 @@ createVM() {
 }
 
 runVM() {
-  info "Starting VM '$VM_NAME' (3 minutes in the VM)..." 100
+  info "Starting VM '$VM_NAME'..." 100
   if ! VBoxManage showvminfo "$VM_NAME" | grep "State:" | grep -i running >/dev/null; then
     result "."
     VBoxManage startvm "$VM_NAME" --type gui
@@ -313,7 +345,7 @@ waitVM() {
 }
 
 stopVM() {
-  info "Press enter to stop the VM and to eject the installer medium (to avoid an installation loop)..."
+  info "Press enter to stop the VM and to eject the installer medium (to avoid an installation loop for macOS < 10.16)..."
   result "."
   read
   VBoxManage controlvm "$VM_NAME" poweroff||true
@@ -325,6 +357,14 @@ removeInstaller() {
   result "."
   # Skip installation DVD to boot from new disk
   VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 2 --device 0 --type dvddrive --medium emptydrive >/dev/null 2>&1||true
+}
+
+download() {
+  info "Downloading macOS (need sudo)..."
+  result "."
+  exec 1>&3
+  sudo ./installinstallmacos.py
+  info "Please mount the produced .dmg file and move the contained installer to /Applications now."
 }
 
 addInstaller() {
@@ -348,9 +388,6 @@ cleanup() {
     error "Look at $FILE_LOG for details (or use Console.app). Press enter in the terminal when done..."
     read -r
   fi
-  if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
-    osascript -e 'tell application "ProgressDialog"' -e 'quit' -e 'end tell'
-  fi
 }
 
 main() {
@@ -360,6 +397,7 @@ main() {
     case "$ARG" in
     check) runChecks ;;
     clean) runClean ;;
+    cleanup) cleanup ;;
     stash) VBoxManage unregistervm --delete "$VM_NAME"||true ;;
     stashvm) VBoxManage storageattach "$VM_NAME" --storagectl "SATA Controller" --port 0 --device 0 --type dvddrive --medium emptydrive >/dev/null 2>&1||true ; VBoxManage unregistervm --delete "$VM_NAME"||true ;;
     installer) createImage ;;
@@ -370,6 +408,7 @@ main() {
     stop) stopVM ;;
     eject) removeInstaller ;;
     add) addInstaller ;;
+    download) download ;;
     all) runChecks && createImage && createVM && patchEFI && runVM && stopVM && removeInstaller && runVM ;;
     *) echo "Possible commands: clean, stash, all, check, installer, patch, vm, run, stop, wait, eject, add" >&4 ;;
     esac
