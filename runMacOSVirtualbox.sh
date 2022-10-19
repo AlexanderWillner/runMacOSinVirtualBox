@@ -127,11 +127,12 @@ runChecks() {
       exit 6
     fi
   fi
-  if [ "$(VBoxManage list extpacks | grep 'USB 3.0')" = "" ]; then
-    error "VirtualBox USB 3.0 Extension Pack not installed. Will not install it automatically, due to licensing issues!"
-    error "Install e.g. via brew install virtualbox-extension-pack"
-    exit 4
-  fi
+  # Not needed anymore
+  # if [ "$(VBoxManage list extpacks | grep 'USB 3.0')" = "" ]; then
+  #   error "VirtualBox USB 3.0 Extension Pack not installed. Will not install it automatically, due to licensing issues!"
+  #   error "Install e.g. via brew install virtualbox-extension-pack"
+  #   exit 4
+  # fi
 
   if ! diskutil listFilesystems | grep -q APFS; then
     error "This host does not support required APFS filesystem. You must upgrade to High Sierra or later and try again."
